@@ -2,14 +2,7 @@
 /*  Ejemplo IO                                  */
 /************************************************/
 
-#include "C:\Program Files\CPLEX_Studio_AcademicResearch122\cplex\include\ilcplex\cplex.h"
-#include <ctype.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
-#include <assert.h>
-#include <iostream>
-
+#include "include.h"
 using namespace std;
 
 #define BUFFERSIZE 256
