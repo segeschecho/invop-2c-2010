@@ -8,5 +8,8 @@
 #include <math.h>
 #include <assert.h>
 #include <iostream>
+#include <vector>
+#include <list>
+#include <algorithm>
 
 #endif // __include_H__
