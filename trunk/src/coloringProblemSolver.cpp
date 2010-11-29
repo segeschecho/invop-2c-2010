@@ -5,7 +5,10 @@
 #include "include.h"
 using namespace std;
 
+/********* Declaracion de constantes *********/
+
 #define BUFFERSIZE 256
+#define LOWER_BOUND_HEURISTIC_MAX_ITERATIONS 3
 #define min(a, b) (a) < (b) ? (a) : (b)
 #define max(a, b) (a) > (b) ? (a) : (b)
 
@@ -18,7 +21,7 @@ typedef pair<int, int> Edge;
 double machineEps;
 vector< vector< bool > > g_vvbGraphTable;
 vector< vector< Edge > > g_vvEGraphAdjList;
-int g_nHeuristicColors;
+pair< int, int > g_nHeuristicColorBounds;
 
 /********* Implementacion de Funciones *********/
 
@@ -34,6 +37,8 @@ static int CPXPUBLIC cortes (CPXCENVptr env,
     //if(cantCortes > 0) *useraction_p = CPX_CALLBACK_SET;  
     return 0;
 }
+
+//////////////////////////////////////////////////////////////////////////
 
 void buildGraphFromCol(const char* colFileName)
 {
@@ -69,6 +74,7 @@ void buildGraphFromCol(const char* colFileName)
             // initialize graph structures
             g_vvbGraphTable = vector< vector< bool > >( nodes, vector< bool >(nodes, false) );
             g_vvEGraphAdjList = vector< vector< Edge > >( nodes, vector< Edge >() );
+            break;
 
         case 'e':
             getc(finput); // skip space
@@ -89,6 +95,8 @@ void buildGraphFromCol(const char* colFileName)
 
     fclose(finput);
 }
+
+//////////////////////////////////////////////////////////////////////////
 
 int minAvailableColor( Node node, vector< int > coloring, int qtyColorsUsed )
 {
@@ -161,6 +169,7 @@ int heuristicSequentialUpperBound()
         vnNodeDegree.push_back( pair<int, Node>(g_vvEGraphAdjList[nCurrentNode].size(), nCurrentNode) );
 
     sort( vnNodeDegree.begin(), vnNodeDegree.end() );
+
     for( int nCurrentNode = vnNodeDegree.size() - 1; nCurrentNode >= 0; nCurrentNode-- )
     {
         int nodeColor = minAvailableColor( nCurrentNode, vvnColoring, nColors );
@@ -172,7 +181,105 @@ int heuristicSequentialUpperBound()
     return nColors;
 }
 
-void colToLp(const char* colFileName, const char* lpFileName, int qtyColorsUpperBound)
+// New-Best-In algorithm
+int maximalClique( Node startingNode )
+{
+    int nNodes = g_vvbGraphTable.size();
+    if ( nNodes == 0 )
+        return 0;
+
+    // Set V1 = V
+    vector< bool > vbNodeIsAvailable( nNodes, true );
+    int nAvailableNodes = nNodes;
+    
+    // Construct the vector of vertex degrees
+    vector< int > vnVertexDegree;
+    for ( Node node = 0; node < nNodes; node++ )
+        vnVertexDegree.push_back( g_vvEGraphAdjList[node].size() );
+
+    Node nCurrentNode = startingNode;
+    Node nCurrentNodeDegree = vnVertexDegree[startingNode];
+
+    // Set k = 1
+    int nCliqueNodes = 0;
+
+    while ( nAvailableNodes > 0 )
+    {
+        // Set Vk+1 = { v | v in Vk and v in N(vk) }.
+        vector< bool > vbAux = vbNodeIsAvailable;
+        for ( int node = 0; node < nNodes; node++ )
+            vbAux[node] = vbNodeIsAvailable[node] && g_vvbGraphTable[nCurrentNode][node];
+
+        for ( int node = 0; node < nNodes; node++ )
+        {
+            if( vbNodeIsAvailable[node] && ! vbAux[node] )
+            {
+                // Update degree(vk)
+                nAvailableNodes--;
+                vnVertexDegree[ node ] = -1;
+                for( vector< Edge >::iterator it = g_vvEGraphAdjList[node].begin();
+                                              it < g_vvEGraphAdjList[node].end();
+                                              it++ )
+                    vnVertexDegree[ it->second ]--;
+            }
+        }
+        vbNodeIsAvailable = vbAux;
+        nCliqueNodes++;
+
+        nCurrentNode = -1;
+        nCurrentNodeDegree = -1;
+        // Choose a vertex vk from Vk such that degree(vk) is greatest
+        for ( Node node = 0; node < nNodes; node++ )
+        {
+            if( vbNodeIsAvailable[ node ] )
+            {
+                int nNodeDegree = vnVertexDegree[ node ];
+                if ( nNodeDegree > nCurrentNodeDegree )
+                {
+                    nCurrentNode = node;
+                    nCurrentNodeDegree = nNodeDegree;
+                }
+            }
+        }
+    }
+
+    return nCliqueNodes;
+}
+
+int heuristicCliqueLowerBound( int iterations )
+{
+    int nNodes = g_vvbGraphTable.size();
+    vector< pair<int, Node> > vnNodeDegree;
+    for( Node nCurrentNode = 0; nCurrentNode < nNodes; nCurrentNode++ )
+        vnNodeDegree.push_back( pair<int, Node>(g_vvEGraphAdjList[nCurrentNode].size(), nCurrentNode) );
+
+    sort( vnNodeDegree.begin(), vnNodeDegree.end() );
+
+    int maximalCliqueNodes = 0;
+
+    for( int i = vnNodeDegree.size() - 1; i >= 0 && iterations > 0; i-- )
+    {
+        Node startingNode = vnNodeDegree[i].second;
+        maximalCliqueNodes = max( maximalCliqueNodes, maximalClique(startingNode) );
+        iterations--;
+    }
+
+    return maximalCliqueNodes;
+}
+
+pair<int, int> heuristicBounds(const char* colFileName)
+{
+    buildGraphFromCol(colFileName);
+    pair<int, int> res( 0, g_vvbGraphTable.size() );
+    res.first = min(heuristicBFSUpperBound(), heuristicSequentialUpperBound());
+    res.second = heuristicCliqueLowerBound(LOWER_BOUND_HEURISTIC_MAX_ITERATIONS);
+
+    return res;
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+void colToLp(const char* colFileName, const char* lpFileName, int qtyColorsLowerBound, int qtyColorsUpperBound)
 {
     FILE* finput;
     FILE* foutput;
@@ -269,12 +376,6 @@ void colToLp(const char* colFileName, const char* lpFileName, int qtyColorsUpper
     fclose(finput);
 }
 
-int heuristicUpperBound(const char* colFileName)
-{
-    buildGraphFromCol(colFileName);
-    return min(heuristicBFSUpperBound(), heuristicSequentialUpperBound());
-}
-
 int main (int argc, char *argv[]){
     int status = 0;
     double init,end;
@@ -284,7 +385,7 @@ int main (int argc, char *argv[]){
     CPXENVptr env = NULL;
     CPXLPptr  lp = NULL;
     machineEps = 0.000001;
-    g_nHeuristicColors = -1;
+    g_nHeuristicColorBounds = pair<int, int>( -1, -1 );
 
     env = CPXopenCPLEX (&status);
     if ( env == NULL )
@@ -294,7 +395,8 @@ int main (int argc, char *argv[]){
     }
 
     /*Parametros para que no preprocese*/
-/*    CPXsetintparam (env, CPX_PARAM_REDUCE,CPX_OFF);
+/*
+    CPXsetintparam (env, CPX_PARAM_REDUCE,CPX_OFF);
     CPXsetintparam (env, CPX_PARAM_PRELINEAR, 0);
     CPXsetintparam (env, CPX_PARAM_MIPCBREDLP, CPX_OFF); 
 */
@@ -320,16 +422,16 @@ int main (int argc, char *argv[]){
     if( argv[1] != 0 )
         fileInput = argv[1];
     else
-        fileInput = "myciel4.col";
+        fileInput = "Coloreo.col";
 
-    g_nHeuristicColors = heuristicUpperBound(fileInput.c_str());
+    g_nHeuristicColorBounds = heuristicBounds(fileInput.c_str());
 
     extensionOffset = fileInput.find_last_of(".");
     if( fileInput.find_last_of(".col") )
     {
         string fileOutput = fileInput.substr(0, extensionOffset);
         fileOutput += ".lp";
-        colToLp(fileInput.c_str(), fileOutput.c_str(), g_nHeuristicColors);
+        colToLp(fileInput.c_str(), fileOutput.c_str(), g_nHeuristicColorBounds.first, g_nHeuristicColorBounds.second);
         fileInput = fileOutput;
     }
 
