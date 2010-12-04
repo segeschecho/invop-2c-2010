@@ -1,0 +1,42 @@
+\section{Ejercicio2}
+
+\subsection{Desigualdad 2: Agujero de Longitud Impar}
+
+Para demostrar que la desigualdad es válida, se demostrará por el método del absurdo. Decir que la desigualdad sea válida para el $CP$ original, implica que para cualquier punto que cumpla con las restricciones  y sea solución del CP, el punto también cumpla con las nuevas restricciones del agujero impar.
+
+Comencemos suponiendo que existe un coloreo válido para el $CP$ original. Por lo tanto existe $W$ = $(W_1, W_2, ... , W_n)$ una cantidad de colores para pintar el grafo y $X$ = $(X_{1,j_{x1}}, ... , X_{n,j_{xn}})$ el coloreo correspondiente, donde $j_{x1}, ... , j_{xn}$ son los colores con los que se pintaron cada uno de los nodos $X_1, ... , X_n$.
+
+Supongamos además que dicha solución, no se cumple para la desigualdad de agujero impar. Por lo tanto podemos decir que $\exists K >= 2$ tal que:
+
+$$
+\sum_{p \in C_{2K+1}} X_{p,j_0} > K*W_{j_0}
+$$
+
+Donde $C_{2K+1}$ es el conjunto de vértices dentro del agujero de longitud impar $2K+1$ y donde $j_0 = (1, ... , n)$. Como se puede observar dicha desigualdad, se encuentra dominada por el valor que tome $W_{j_0}$, es decir, si el color $j_0$ se usa o no.
+
+Si llega a ser el caso en el que $W_{j_0} = 0$, la desigualdad nos quedaría de la siguiente forma:
+
+\begin{itemize}
+\item $$
+      \sum_{p \in C_{2K+1}} X_{p,j_0} > 0
+      $$
+      
+      Como se puede observar, la restricción se cumple si existe algún $p$ tal que $X_{o,j_0} = 1$. Pero como se puede ver, esto pasa si y solo si hay un nodo pintado con el color $j_0$, pero esto no puede ser, ya que se había dicho que $W_{j_0} = 0$, que indica que el color $j_0$ no se usa. Por lo tanto llegamos a un absurdo.
+\end{itemize}
+
+Si llega a ser el caso en el que $W_{j_0} = 1$, la desigualdad quedaría de la siguiente forma:
+
+\begin{itemize}
+\item$$
+      \sum_{p \in C_{2K+1}} X_{p,j_0} > K
+      $$
+      
+      La restricción entonces, se cumple si pasa que hay $K+1$ o mas nodos pintados con el color $j_0$ dentro del agujero impar. Quiere decir que en un agujero de $2K+1$ nodos, estén pintados $k+1$ o mas del mismo color, y esto pasa si y solo si hay al menos dos nodos adyacentes $X_{p, j_0}$ y $X_{q, j_0}$ (pintados del mismo color).
+      
+      Pero por una de las restricciones del $LP$ original, tiene que valer que:
+      $$
+      X_{p, j_0} + X_{q, j_0} \le W_{j_0} = 1 \leftarrow \rightarrow 2 \le 1
+      $$
+      
+      Lo cual resulta absurdo, ya que la solución era válida para el $CP$ original.
+\end{itemize}
