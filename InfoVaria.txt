@@ -1,0 +1,11 @@
+--Configurar code blocks para correr la libreria de cplex
+
+    http://www-01.ibm.com/support/docview.wss?uid=swg21449771
+
+--Ejemplo de funcionamiento de branch and bound
+
+    http://www.youtube.com/watch?v=r_37oQ2VCkc
+
+---Resolvedor de coloreo corriendo el algoritmo DSATUR.
+
+    http://prolland.free.fr/works/research/dsatphp/dsat.html

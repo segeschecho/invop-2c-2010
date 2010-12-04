@@ -1,0 +1,107 @@
+ %%	SECCION documentclass																									 %%	
+%%---------------------------------------------------------------------------%%
+\documentclass[a4paper]{report}
+
+%%---------------------------------------------------------------------------%%
+%%	SECCION usepackage																											 %%	
+%%---------------------------------------------------------------------------%%
+\usepackage{amsmath, amsthm}
+\usepackage[spanish,activeacute]{babel}
+\usepackage{caratula}
+\usepackage{a4wide}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{graphicx} % Para el logo magico!
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage[latin1]{inputenc}
+%\usepackage [T1]{fontenc}
+\usepackage[dvipsnames,usenames]{color}
+\usepackage{amsfonts}
+\usepackage{ulem}
+%\usepackage{highlight}
+\usepackage{fancybox}
+%\usepackage{marvosym}
+\usepackage{color}
+\usepackage{lastpage}
+\usepackage{lscape}
+\usepackage{tabularx}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{subfigure}
+
+%%---------------------------------------------------------------------------%%
+%%	SECCION opciones																												 %%	
+%%---------------------------------------------------------------------------%%
+\parskip    = 11 pt
+\headheight	= 13.1pt
+\pagestyle	{fancy}
+\definecolor{orange}{rgb}{1,0.5,0}
+
+\addtolength{\headwidth}{1.0in}
+
+\addtolength{\oddsidemargin}{-0.5in}
+\addtolength{\textwidth}{1.0in}
+\addtolength{\topmargin}{-0.5in}
+\addtolength{\textheight}{0.7in}
+
+%%---------------------------------------------------------------------------%%
+%%	SECCION document	 %%	
+%%---------------------------------------------------------------------------%%
+\begin{document}
+\renewcommand{\chaptername}{Parte }
+\input{trans_algorithmic.tex}
+%%---- Caratula -------------------------------------------------------------%%
+\materia{Investigación Operativa (2do cuatrimestre de 2010)}
+\titulo{Trabajo Práctico}
+
+\integrante{Gonzalez, Emiliano}{426/06}{xjesse\_jamesx@hotmail.com}
+\integrante{Gonzalez, Sergio}{481/06}{gonzalezsergio2003@yahoo.com.ar}
+\resumen{
+En el siguiente documento, se mostrarán diferentes pruebas de performance utilizando la herramienta CPLEX. Las pruebas consisten en la modificación de diferentes técnicas de brancheo del método Branch and Bound y del método Branch and Cut, esta última con una parte implementada especialmente para resolver el problema de separación.}
+
+% TOC, usa estilos locos
+\maketitle
+\pagestyle{empty}
+{
+\fancypagestyle{plain}
+    {
+    \fancyhead{}
+    \fancyfoot{}
+    \renewcommand{\headrulewidth}{0.0pt}
+    } % clear header and footer of plain page because of ToC
+\tableofcontents
+}
+
+\newpage
+% arreglos los estilos para el resto del documento, y
+% reseteo los numeros de pagina para que queden bien
+\pagenumbering{arabic}
+\fancypagestyle{plain} {
+    \fancyhead[LO]{Gonzalez, Gonzalez, Tleye}
+    \fancyhead[C]{}
+    \fancyhead[RO]{P\'agina \thepage\ de \pageref{LastPage}}
+    \fancyfoot{}
+    \renewcommand{\headrulewidth}{0.4pt}
+}
+\pagestyle{plain}
+
+%\newpage
+%\input{ejercicio1}
+%\clearpage
+
+\newpage
+\input{ejercicio2}
+\clearpage
+
+%\newpage
+%\input{ejercicio3}
+%\clearpage
+
+%\newpage
+%\input{ejercicio4}
+%\clearpage
+
+\label{LastPage}
+\end{document}
