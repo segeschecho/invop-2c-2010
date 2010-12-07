@@ -424,7 +424,7 @@ int main (int argc, char *argv[]){
     else
         fileInput = "Coloreo.col";
 
-    g_nHeuristicColorBounds = heuristicBounds(fileInput.c_str());
+//    g_nHeuristicColorBounds = heuristicBounds(fileInput.c_str());
 
     extensionOffset = fileInput.find_last_of(".");
     if( fileInput.find_last_of(".col") )

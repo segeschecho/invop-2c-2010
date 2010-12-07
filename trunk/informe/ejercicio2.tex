@@ -1,15 +1,89 @@
 \section{Ejercicio2}
 
+Para demostrar que las desigualdades son válidas, se utilizará el método del absurdo. La desigualdad es válida para el $CP$ original (sin relajación) si la desigualdad se cumple para todos los puntos dentro de la cápsula convexa de soluciones factibles enteras. Por lo tanto el planteo inicial será suponer que el punto no cumple con la nueva restricción pero sí con las condiciones originales.
+
+\subsection{Desigualdad 1: Clique}
+
+Supongamos que existe un coloreo válido para el $CP$ original. Por lo tanto existe $W$ = $(w_0, w_1, ... , w_n)$ y $X = \{x_{vj} \| v = 0, ..., n \wedge j = 0, ..., n\}$, donde $v$ son los nodos y $j$ son los colores con los que se pintaron los mismos. Entonces para $X$ vale:
+
+$\displaystyle\sum_{j = 1}^{n} x_{pj} = 1 \forall p \in V$
+
+$x_{pj} + x_{qj} \le w_j \forall (p,q) \in E, j = 1,...,n$
+
+$x_{pj} \in \{0,1\} \forall p \in V, j = 1,...,n$
+
+$w_j \in \{0,1\} \forall j = 1,...,n$
+\vspace{0.5cm}
+\newline
+Supongamos además que dicha solución no cumple con la desigualdad clique, entonces sabemos que vale lo siguiente:
+
+$\displaystyle\sum_{p \in K} x_{pj_0} > w_{j_0}$
+
+Supongamos que $\|K\| = 2$, entonces:
+
+$$x_{{p_1}{j_0}} + x_{{p_2}{j_0}} > w_{j_0}$$
+
+Pero por otro lado, como K es una clique, sabemos que existe un eje $({p_1},{p_2})$ de modo que se cumple la condición del $CP$ original:
+
+$$x_{{p_1}{j_0}} + x_{{p_2}{j_0}} <= w_{j_0}$$
+
+Absurdo! No puede ser que $A > w_{j_0}$ y que $A <= w_{j_0}$ siendo $A = x_{{p_1}{j_0}} + x_{{p_2}{j_0}}$
+
+Supongamos ahora que $\|K\| > 2$, entonces:
+
+$$x_{{p_1}{j_0}} + x_{{p_2}{j_0}} + x_{{p_3}{j_0}} + ... + x_{{p_n}{j_0}} > w_{j_0}$$
+
+Por otro lado, como K es una clique de almenos tres nodos, sabemos que existen ejes $({p_1},{p_2})$, $({p_2},{p_3})$, $({p_3},{p_1})$ de modo que se cumplen las condiciones del $CP$ original:
+
+$x_{{p_1}{j_0}} + x_{{p_2}{j_0}} \le w_{j_0}$
+
+$x_{{p_2}{j_0}} + x_{{p_3}{j_0}} \le w_{j_0}$
+
+$x_{{p_3}{j_0}} + x_{{p_1}{j_0}} \le w_{j_0}$
+
+Entonces vale decir que
+
+$$x_{{p_1}{j_0}} + x_{{p_2}{j_0}} < x_{{p_1}{j_0}} + x_{{p_2}{j_0}} + x_{{p_3}{j_0}} + ... + x_{{p_n}{j_0}}$$
+
+O sea
+
+$$x_{{p_3}{j_0}} + ... + x_{{p_n}{j_0}} > 0$$
+
+Sin pérdida de generalidad suponemos que $x_{{p_3}{j_0}} = 1$.
+
+Por otro lado
+
+$$x_{{p_2}{j_0}} + x_{{p_3}{j_0}} \le w_{j_0}$$
+
+Entonces vale que
+
+$$x_{{p_2}{j_0}} + x_{{p_3}{j_0}} < x_{{p_1}{j_0}} + x_{{p_2}{j_0}} + x_{{p_3}{j_0}} + ... + x_{{p_n}{j_0}}$$
+
+Por lo tanto
+$$x_{{p_1}{j_0}} + x_{{p_4}{j_0}} + ... + x_{{p_n}{j_0}} > 0$$
+
+Nuevamente, sin pérdida de generalidad suponemos que $x_{{p_1}{j_0}} = 1$
+
+Pero por otro lado sabíamos que 
+
+$$x_{{p_3}{j_0}} + x_{{p_1}{j_0}} \le w_{j_0}$$
+
+O sea que
+
+$$w_{j_0} \geq 2$$
+
+Absurdo! Pues $w_{j_0} \in \{0, 1\}$.
+
+Queda entonces demostrado que si valen las condiciones del $CP$ original, entonces vale la desigualdad Clique, por lo tanto la misma es válida.
+
 \subsection{Desigualdad 2: Agujero de Longitud Impar}
 
-Para demostrar que la desigualdad es válida, se demostrará por el método del absurdo. Decir que la desigualdad sea válida para el $CP$ original, implica que para cualquier punto que cumpla con las restricciones  y sea solución del CP, el punto también cumpla con las nuevas restricciones del agujero impar.
+Supongamos que existe un coloreo válido para el $CP$ original. Por lo tanto existe $W$ = $(W_1, W_2, ... , W_n)$ una cantidad de colores para pintar el grafo y $X$ = $(X_{1j_{x1}}, ... , X_{nj_{xn}})$ el coloreo correspondiente, donde $j_{x1}, ... , j_{xn}$ son los colores con los que se pintaron cada uno de los nodos $X_1, ... , X_n$.
 
-Comencemos suponiendo que existe un coloreo válido para el $CP$ original. Por lo tanto existe $W$ = $(W_1, W_2, ... , W_n)$ una cantidad de colores para pintar el grafo y $X$ = $(X_{1,j_{x1}}, ... , X_{n,j_{xn}})$ el coloreo correspondiente, donde $j_{x1}, ... , j_{xn}$ son los colores con los que se pintaron cada uno de los nodos $X_1, ... , X_n$.
-
-Supongamos además que dicha solución, no se cumple para la desigualdad de agujero impar. Por lo tanto podemos decir que $\exists K >= 2$ tal que:
+Supongamos además que dicha solución no cumple con la desigualdad agujero impar. Por lo tanto podemos decir que $\exists k >= 2$ tal que:
 
 $$
-\sum_{p \in C_{2K+1}} X_{p,j_0} > K*W_{j_0}
+\sum_{p \in C_{2k+1}} X_{p,j_0} > kW_{j_0}
 $$
 
 Donde $C_{2K+1}$ es el conjunto de vértices dentro del agujero de longitud impar $2K+1$ y donde $j_0 = (1, ... , n)$. Como se puede observar dicha desigualdad, se encuentra dominada por el valor que tome $W_{j_0}$, es decir, si el color $j_0$ se usa o no.
@@ -35,7 +109,7 @@ Si llega a ser el caso en el que $W_{j_0} = 1$, la desigualdad quedaría de la si
       
       Pero por una de las restricciones del $LP$ original, tiene que valer que:
       $$
-      X_{p, j_0} + X_{q, j_0} \le W_{j_0} = 1 \leftarrow \rightarrow 2 \le 1
+      X_{p, j_0} + X_{q, j_0} \le W_{j_0} = 1 \leftrightarrow 2 \le 1
       $$
       
       Lo cual resulta absurdo, ya que la solución era válida para el $CP$ original.
