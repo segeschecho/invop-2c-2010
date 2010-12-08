@@ -4,77 +4,85 @@ Para demostrar que las desigualdades son válidas, se utilizará el método del abs
 
 \subsection{Desigualdad 1: Clique}
 
-Supongamos que existe un coloreo válido para el $CP$ original. Por lo tanto existe $W$ = $(w_0, w_1, ... , w_n)$ y $X = \{x_{vj} \| v = 0, ..., n \wedge j = 0, ..., n\}$, donde $v$ son los nodos y $j$ son los colores con los que se pintaron los mismos. Entonces para $X$ vale:
+Supongamos que existe un coloreo válido para el $CP$ original. Por lo tanto existe $W$ = $(w_0, w_1, ... , w_n)$ y $X = \{x_{vj} | v = 0, ..., n \wedge j = 0, ..., n\}$, donde $v$ son los nodos y $j$ son los colores con los que se pintaron los mismos. Entonces para $X$ vale:
 
-$\displaystyle\sum_{j = 1}^{n} x_{pj} = 1 \forall p \in V$
+\begin{enumerate}
+\item $\displaystyle\sum_{j = 1}^{n} x_{pj} = 1 \forall p \in V$
 
-$x_{pj} + x_{qj} \le w_j \forall (p,q) \in E, j = 1,...,n$
+\item $x_{pj} + x_{qj} \le w_j \forall (p,q) \in E, j = 1,...,n$
 
-$x_{pj} \in \{0,1\} \forall p \in V, j = 1,...,n$
+\item $x_{pj} \in \{0,1\} \forall p \in V, j = 1,...,n$
 
-$w_j \in \{0,1\} \forall j = 1,...,n$
-\vspace{0.5cm}
-\newline
+\item $w_j \in \{0,1\} \forall j = 1,...,n$
+
+\end{enumerate}
+
+
 Supongamos además que dicha solución no cumple con la desigualdad clique, entonces sabemos que vale lo siguiente:
 
-$\displaystyle\sum_{p \in K} x_{pj_0} > w_{j_0}$
+$$\displaystyle\sum_{p \in K} x_{pj_0} > w_{j_0}$$
 
-Supongamos que $\|K\| = 2$, entonces:
+\begin{itemize}
+
+\item Supongamos que $|K| = 2$, entonces vale que:
 
 $$x_{{p_1}{j_0}} + x_{{p_2}{j_0}} > w_{j_0}$$
 
-Pero por otro lado, como K es una clique, sabemos que existe un eje $({p_1},{p_2})$ de modo que se cumple la condición del $CP$ original:
+Pero por otro lado, como K es una clique, sabemos que existe un eje $({p_1},{p_2})$ de modo que se cumple la condición (2) del $CP$ original:
 
 $$x_{{p_1}{j_0}} + x_{{p_2}{j_0}} <= w_{j_0}$$
 
-Absurdo! No puede ser que $A > w_{j_0}$ y que $A <= w_{j_0}$ siendo $A = x_{{p_1}{j_0}} + x_{{p_2}{j_0}}$
+Pero esto resulta ser absurdo ya que no puede pasar que $A > w_{j_0}$ y que $A <= w_{j_0}$ siendo $A = x_{{p_1}{j_0}} + x_{{p_2}{j_0}}$.$\qed$
 
-Supongamos ahora que $\|K\| > 2$, entonces:
+
+\item Supongamos ahora que $|K| > 2$, entonces:
 
 $$x_{{p_1}{j_0}} + x_{{p_2}{j_0}} + x_{{p_3}{j_0}} + ... + x_{{p_n}{j_0}} > w_{j_0}$$
 
-Por otro lado, como K es una clique de almenos tres nodos, sabemos que existen ejes $({p_1},{p_2})$, $({p_2},{p_3})$, $({p_3},{p_1})$ de modo que se cumplen las condiciones del $CP$ original:
+Por otro lado, como K es una clique de al menos tres nodos, sabemos que existen ejes $({p_1},{p_2})$, $({p_2},{p_3})$, $({p_3},{p_1})$ de modo que se cumplen las condiciones (2) del $CP$ original:
 
-$x_{{p_1}{j_0}} + x_{{p_2}{j_0}} \le w_{j_0}$
+$$x_{{p_1}{j_0}} + x_{{p_2}{j_0}} \le w_{j_0}$$
 
-$x_{{p_2}{j_0}} + x_{{p_3}{j_0}} \le w_{j_0}$
+$$x_{{p_2}{j_0}} + x_{{p_3}{j_0}} \le w_{j_0}$$
 
-$x_{{p_3}{j_0}} + x_{{p_1}{j_0}} \le w_{j_0}$
+$$x_{{p_3}{j_0}} + x_{{p_1}{j_0}} \le w_{j_0}$$
 
-Entonces vale decir que
+\medskip
+Entonces vale decir lo siguiente:
 
 $$x_{{p_1}{j_0}} + x_{{p_2}{j_0}} < x_{{p_1}{j_0}} + x_{{p_2}{j_0}} + x_{{p_3}{j_0}} + ... + x_{{p_n}{j_0}}$$
 
-O sea
+Por lo tanto podemos llegar a lo siguiente:
 
 $$x_{{p_3}{j_0}} + ... + x_{{p_n}{j_0}} > 0$$
 
 Sin pérdida de generalidad suponemos que $x_{{p_3}{j_0}} = 1$.
 
-Por otro lado
+\medskip
+Por otro lado tenemos que:
 
 $$x_{{p_2}{j_0}} + x_{{p_3}{j_0}} \le w_{j_0}$$
 
-Entonces vale que
+Por condición (2) del $LP$ original. Entonces vale lo siguiente:
 
 $$x_{{p_2}{j_0}} + x_{{p_3}{j_0}} < x_{{p_1}{j_0}} + x_{{p_2}{j_0}} + x_{{p_3}{j_0}} + ... + x_{{p_n}{j_0}}$$
 
-Por lo tanto
+Por lo tanto:
+
 $$x_{{p_1}{j_0}} + x_{{p_4}{j_0}} + ... + x_{{p_n}{j_0}} > 0$$
 
-Nuevamente, sin pérdida de generalidad suponemos que $x_{{p_1}{j_0}} = 1$
-
-Pero por otro lado sabíamos que 
+Nuevamente, sin pérdida de generalidad suponemos que $x_{{p_1}{j_0}} = 1$. Pero se sabía por lo anterior que:
 
 $$x_{{p_3}{j_0}} + x_{{p_1}{j_0}} \le w_{j_0}$$
 
-O sea que
+Por este motivo, se llega a lo siguiente:
 
 $$w_{j_0} \geq 2$$
 
-Absurdo! Pues $w_{j_0} \in \{0, 1\}$.
+Lo cual resuulta absurdo, pues $w_{j_0} \in \{0, 1\}$. $\qed$
 
-Queda entonces demostrado que si valen las condiciones del $CP$ original, entonces vale la desigualdad Clique, por lo tanto la misma es válida.
+\end{itemize}
+
 
 \subsection{Desigualdad 2: Agujero de Longitud Impar}
 
@@ -95,7 +103,7 @@ Si llega a ser el caso en el que $W_{j_0} = 0$, la desigualdad nos quedaría de l
       \sum_{p \in C_{2K+1}} X_{p,j_0} > 0
       $$
       
-      Como se puede observar, la restricción se cumple si existe algún $p$ tal que $X_{o,j_0} = 1$. Pero como se puede ver, esto pasa si y solo si hay un nodo pintado con el color $j_0$, pero esto no puede ser, ya que se había dicho que $W_{j_0} = 0$, que indica que el color $j_0$ no se usa. Por lo tanto llegamos a un absurdo.
+      Como se puede observar, la restricción se cumple si existe algún $p$ tal que $X_{o,j_0} = 1$. Pero como se puede ver, esto pasa si y solo si hay un nodo pintado con el color $j_0$, pero esto no puede ser, ya que se había dicho que $W_{j_0} = 0$, que indica que el color $j_0$ no se usa. Por lo tanto llegamos a un absurdo.$\qed$
 \end{itemize}
 
 Si llega a ser el caso en el que $W_{j_0} = 1$, la desigualdad quedaría de la siguiente forma:
@@ -112,5 +120,5 @@ Si llega a ser el caso en el que $W_{j_0} = 1$, la desigualdad quedaría de la si
       X_{p, j_0} + X_{q, j_0} \le W_{j_0} = 1 \leftrightarrow 2 \le 1
       $$
       
-      Lo cual resulta absurdo, ya que la solución era válida para el $CP$ original.
+      Lo cual resulta absurdo, ya que la solución era válida para el $CP$ original.$\qed$
 \end{itemize}
