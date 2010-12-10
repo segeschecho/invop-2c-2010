@@ -31,10 +31,10 @@ static int CPXPUBLIC cortes (CPXCENVptr env,
                              void       *cbhandle,
                              int        *useraction_p)
 {
-  
+
     *useraction_p = CPX_CALLBACK_DEFAULT;
 
-    //if(cantCortes > 0) *useraction_p = CPX_CALLBACK_SET;  
+    //if(cantCortes > 0) *useraction_p = CPX_CALLBACK_SET;
     return 0;
 }
 
@@ -66,7 +66,7 @@ void buildGraphFromCol(const char* colFileName)
         case 'p':
             getc(finput); // skip space
             int i;
-            for( i = 0; i < BUFFERSIZE && (c = getc(finput)) != ' '; i++ ) 
+            for( i = 0; i < BUFFERSIZE && (c = getc(finput)) != ' '; i++ )
                 format[i] = c;
             format[i] = '\0';
             fscanf(finput, "%d %d\n", &nodes, &edges);
@@ -191,7 +191,7 @@ int maximalClique( Node startingNode )
     // Set V1 = V
     vector< bool > vbNodeIsAvailable( nNodes, true );
     int nAvailableNodes = nNodes;
-    
+
     // Construct the vector of vertex degrees
     vector< int > vnVertexDegree;
     for ( Node node = 0; node < nNodes; node++ )
@@ -318,7 +318,7 @@ void colToLp(const char* colFileName, const char* lpFileName, int qtyColorsLower
         case 'p':
             getc(finput); // skip space
             int i;
-            for( i = 0; i < BUFFERSIZE && (c = getc(finput)) != ' '; i++ ) 
+            for( i = 0; i < BUFFERSIZE && (c = getc(finput)) != ' '; i++ )
                 format[i] = c;
             format[i] = '\0';
             fscanf(finput, "%d %d\n", &nodes, &edges);
@@ -395,11 +395,10 @@ int main (int argc, char *argv[]){
     }
 
     /*Parametros para que no preprocese*/
-/*
     CPXsetintparam (env, CPX_PARAM_REDUCE,CPX_OFF);
     CPXsetintparam (env, CPX_PARAM_PRELINEAR, 0);
-    CPXsetintparam (env, CPX_PARAM_MIPCBREDLP, CPX_OFF); 
-*/
+    CPXsetintparam (env, CPX_PARAM_MIPCBREDLP, CPX_OFF);
+
     /*Parametros para salida por pantalla*/
     CPXsetintparam (env, CPX_PARAM_SCRIND, CPX_ON);
     CPXsetintparam (env, CPX_PARAM_MIPINTERVAL, 1);
