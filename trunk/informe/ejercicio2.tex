@@ -2,8 +2,6 @@
 
 Para demostrar que las desigualdades son válidas, se utilizará el método del absurdo. La desigualdad es válida para el $CP$ original (sin relajación) si la desigualdad se cumple para todos los puntos dentro de la cápsula convexa de soluciones factibles enteras. Por lo tanto el planteo inicial será suponer que el punto no cumple con la nueva restricción pero sí con las condiciones originales.
 
-\subsection{Desigualdad 1: Clique}
-
 Supongamos que existe un coloreo válido para el $CP$ original. Por lo tanto existe $W$ = $(w_0, w_1, ... , w_n)$ y $X = \{x_{vj} | v = 0, ..., n \wedge j = 0, ..., n\}$, donde $v$ son los nodos y $j$ son los colores con los que se pintaron los mismos. Entonces para $X$ vale:
 
 \begin{enumerate}
@@ -17,29 +15,30 @@ Supongamos que existe un coloreo válido para el $CP$ original. Por lo tanto exis
 
 \end{enumerate}
 
+\subsection{Desigualdad 1: Clique}
 
-Supongamos además que dicha solución no cumple con la desigualdad clique, entonces sabemos que vale lo siguiente:
+Sea K una Clique del grafo y sea $j_0$ cualquier color tal que $1 \le j_0 \le n$. Supongamos que la solución no cumple con la desigualdad clique, entonces sabemos que vale lo siguiente:
 
 $$\displaystyle\sum_{p \in K} x_{pj_0} > w_{j_0}$$
 
 \begin{itemize}
 
-\item Supongamos que $|K| = 2$, entonces vale que:
+\item Supongamos que $|K| = 2$. Sean dos nodos cualesquiera $p_1$ y $p_2$ de la Clique, entonces vale que:
 
 $$x_{{p_1}{j_0}} + x_{{p_2}{j_0}} > w_{j_0}$$
 
 Pero por otro lado, como K es una clique, sabemos que existe un eje $({p_1},{p_2})$ de modo que se cumple la condición (2) del $CP$ original:
 
-$$x_{{p_1}{j_0}} + x_{{p_2}{j_0}} <= w_{j_0}$$
+$$x_{{p_1}{j_0}} + x_{{p_2}{j_0}} \le w_{j_0}$$
 
-Pero esto resulta ser absurdo ya que no puede pasar que $A > w_{j_0}$ y que $A <= w_{j_0}$ siendo $A = x_{{p_1}{j_0}} + x_{{p_2}{j_0}}$.$\qed$
+Pero esto resulta ser absurdo ya que no puede pasar que $A > w_{j_0}$ y que $A \le w_{j_0}$ siendo $A = x_{{p_1}{j_0}} + x_{{p_2}{j_0}}$.$\qed$
 
 
-\item Supongamos ahora que $|K| > 2$, entonces:
+\item Supongamos ahora que $|K| > 2$. Sean tres nodos cualesquiera $p_1$, $p_2$ y $p_3$ de la Clique, entonces vale que:
 
 $$x_{{p_1}{j_0}} + x_{{p_2}{j_0}} + x_{{p_3}{j_0}} + ... + x_{{p_n}{j_0}} > w_{j_0}$$
 
-Por otro lado, como K es una clique de al menos tres nodos, sabemos que existen ejes $({p_1},{p_2})$, $({p_2},{p_3})$, $({p_3},{p_1})$ de modo que se cumplen las condiciones (2) del $CP$ original:
+Por otro lado, como K es una clique, sabemos que existen ejes $({p_1},{p_2})$, $({p_2},{p_3})$, $({p_3},{p_1})$ de modo que se cumplen las condiciones (2) del $CP$ original:
 
 $$x_{{p_1}{j_0}} + x_{{p_2}{j_0}} \le w_{j_0}$$
 
@@ -50,13 +49,13 @@ $$x_{{p_3}{j_0}} + x_{{p_1}{j_0}} \le w_{j_0}$$
 \medskip
 Entonces vale decir lo siguiente:
 
-$$x_{{p_1}{j_0}} + x_{{p_2}{j_0}} < x_{{p_1}{j_0}} + x_{{p_2}{j_0}} + x_{{p_3}{j_0}} + ... + x_{{p_n}{j_0}}$$
+$$x_{{p_1}{j_0}} + x_{{p_2}{j_0}} \le w_{j_0} < x_{{p_1}{j_0}} + x_{{p_2}{j_0}} + x_{{p_3}{j_0}} + ... + x_{{p_n}{j_0}}$$
 
-Por lo tanto podemos llegar a lo siguiente:
+Por lo tanto se deduce lo siguiente:
 
 $$x_{{p_3}{j_0}} + ... + x_{{p_n}{j_0}} > 0$$
 
-Sin pérdida de generalidad suponemos que $x_{{p_3}{j_0}} = 1$.
+Podemos suponer, sin pérdida de generalidad, que $x_{{p_3}{j_0}} = 1$.
 
 \medskip
 Por otro lado tenemos que:
@@ -65,7 +64,7 @@ $$x_{{p_2}{j_0}} + x_{{p_3}{j_0}} \le w_{j_0}$$
 
 Por condición (2) del $LP$ original. Entonces vale lo siguiente:
 
-$$x_{{p_2}{j_0}} + x_{{p_3}{j_0}} < x_{{p_1}{j_0}} + x_{{p_2}{j_0}} + x_{{p_3}{j_0}} + ... + x_{{p_n}{j_0}}$$
+$$x_{{p_2}{j_0}} + x_{{p_3}{j_0}} \le w_{j_0} < x_{{p_1}{j_0}} + x_{{p_2}{j_0}} + x_{{p_3}{j_0}} + ... + x_{{p_n}{j_0}}$$
 
 Por lo tanto:
 
@@ -75,50 +74,53 @@ Nuevamente, sin pérdida de generalidad suponemos que $x_{{p_1}{j_0}} = 1$. Pero 
 
 $$x_{{p_3}{j_0}} + x_{{p_1}{j_0}} \le w_{j_0}$$
 
-Por este motivo, se llega a lo siguiente:
+Por lo tanto, se llega a que:
 
 $$w_{j_0} \geq 2$$
 
-Lo cual resuulta absurdo, pues $w_{j_0} \in \{0, 1\}$. $\qed$
+Lo cual resulta absurdo, pues por (4) $w_j \in \{0, 1\} \forall 1 \le j \le n$. $\qed$
 
 \end{itemize}
 
+Dado que no hay más alternativas, la suposición de que la desigualdad no se cumple es falsa. $\qed$
 
 \subsection{Desigualdad 2: Agujero de Longitud Impar}
 
-Supongamos que existe un coloreo válido para el $CP$ original. Por lo tanto existe $W$ = $(W_1, W_2, ... , W_n)$ una cantidad de colores para pintar el grafo y $X$ = $(X_{1j_{x1}}, ... , X_{nj_{xn}})$ el coloreo correspondiente, donde $j_{x1}, ... , j_{xn}$ son los colores con los que se pintaron cada uno de los nodos $X_1, ... , X_n$.
-
-Supongamos además que dicha solución no cumple con la desigualdad agujero impar. Por lo tanto podemos decir que $\exists k >= 2$ tal que:
+Sea $C_{2k+1}$ el conjunto de vértices dentro de un agujero de longitud $2k+1$, con $k >= 2$. Supongamos que la solución no cumple con la desigualdad agujero impar. Por lo tanto podemos decir que $\exists k >= 2$ tal que:
 
 $$
-\sum_{p \in C_{2k+1}} X_{p,j_0} > kW_{j_0}
+\sum_{p \in C_{2k+1}} x_{p{j_0}} > kw_{j_0}
 $$
 
-Donde $C_{2K+1}$ es el conjunto de vértices dentro del agujero de longitud impar $2K+1$ y donde $j_0 = (1, ... , n)$. Como se puede observar dicha desigualdad, se encuentra dominada por el valor que tome $W_{j_0}$, es decir, si el color $j_0$ se usa o no.
-
-Si llega a ser el caso en el que $W_{j_0} = 0$, la desigualdad nos quedaría de la siguiente forma:
+Con $j_0$ cualquier color tal que $1 \le j_0 \le n$.
 
 \begin{itemize}
-\item $$
-      \sum_{p \in C_{2K+1}} X_{p,j_0} > 0
-      $$
+\item Supongamos que $w_{j_0} = 0$. Para este caso la desigualdad quedaría de la siguiente forma:
+
+$$
+\sum_{p \in C_{2k+1}} x_{p{j_0}} > 0
+$$
       
-      Como se puede observar, la restricción se cumple si existe algún $p$ tal que $X_{o,j_0} = 1$. Pero como se puede ver, esto pasa si y solo si hay un nodo pintado con el color $j_0$, pero esto no puede ser, ya que se había dicho que $W_{j_0} = 0$, que indica que el color $j_0$ no se usa. Por lo tanto llegamos a un absurdo.$\qed$
+Como se puede observar, la restricción se cumple si existe algún nodo $p$ del agujero $C_{2k+1}$ tal que $x_{p{j_0}} = 1$. Dado que no hay nodos aislados, podemos tomar un eje $(p,p')$ de modo que se cumple la condición (2) del $CP$ original:
+
+$$x_{{p}{j_0}} + x_{{p'}{j_0}} \le w_{j_0}$$
+
+O sea que
+
+$$x_{{p'}{j_0}} + 1 \le w_{j_0}$$
+
+Pero por (3) $x_{{p'}{j_0}} \in \{0,1\}$, y $w_{j_0} = 0$, o sea que $x_{{p'}{j_0}} + 1 \le 0$ lo cual es absurdo. $\qed$
+
+\item Supongamos ahora que $w_{j_0} = 1$. Para este caso la desigualdad quedaría de la siguiente forma:
+
+$$
+\sum_{p \in C_{2k+1}} x_{p{j_0}} > k
+$$
+      
+La restricción entonces se cumple si hay almenos $k+1$ nodos del agujero pintados con el color $j_0$.
+
+Para un circuito de longitud $2k+1$, la máxima cantidad de nodos pintados del mismo color para que su coloreo sea válido es $k$. Como los nodos del agujero conforman un circuito de longitud impar, si pintamos $k+1$ o más nodos del mismo color, este coloreo sería inválido para el mismo circuito, por lo tanto hay almenos dos nodos que son adyacentes entre sí y están pintados del mismo color. Por consiguiente el coloreo es inválido y la suposición de que $w_{j_0} = 1$ es absurda. $\qed$
+
 \end{itemize}
 
-Si llega a ser el caso en el que $W_{j_0} = 1$, la desigualdad quedaría de la siguiente forma:
-
-\begin{itemize}
-\item$$
-      \sum_{p \in C_{2K+1}} X_{p,j_0} > K
-      $$
-      
-      La restricción entonces, se cumple si pasa que hay $K+1$ o mas nodos pintados con el color $j_0$ dentro del agujero impar. Quiere decir que en un agujero de $2K+1$ nodos, estén pintados $k+1$ o mas del mismo color, y esto pasa si y solo si hay al menos dos nodos adyacentes $X_{p, j_0}$ y $X_{q, j_0}$ (pintados del mismo color).
-      
-      Pero por una de las restricciones del $LP$ original, tiene que valer que:
-      $$
-      X_{p, j_0} + X_{q, j_0} \le W_{j_0} = 1 \leftrightarrow 2 \le 1
-      $$
-      
-      Lo cual resulta absurdo, ya que la solución era válida para el $CP$ original.$\qed$
-\end{itemize}
+Dado que no hay más alternativas, la suposición de que la desigualdad no se cumple es falsa. $\qed$
