@@ -399,10 +399,21 @@ int main (int argc, char *argv[]){
     CPXsetintparam (env, CPX_PARAM_PRELINEAR, 0);
     CPXsetintparam (env, CPX_PARAM_MIPCBREDLP, CPX_OFF);
 
+    /*parametros para que no haga cortes*/
+    CPXsetintparam(env,CPX_PARAM_CUTPASS,-1);     //Number of cutting plane passes
+    CPXsetdblparam(env,CPX_PARAM_CUTSFACTOR,0.0); //Row multiplier factor for cuts
+
     /*Parametros para salida por pantalla*/
-    CPXsetintparam (env, CPX_PARAM_SCRIND, CPX_ON);
-    CPXsetintparam (env, CPX_PARAM_MIPINTERVAL, 1);
-    CPXsetintparam (env, CPX_PARAM_MIPDISPLAY, 3);
+    CPXsetintparam (env, CPX_PARAM_SCRIND, CPX_OFF); //para mostrar las iteraciones
+    CPXsetintparam (env, CPX_PARAM_MIPINTERVAL, 1);  //para el log
+    CPXsetintparam (env, CPX_PARAM_MIPDISPLAY, 3);   //muestra las soluciones y los cortes
+
+    ///Parametros para elegir las estrategias de branching
+    CPXsetintparam (env, CPX_PARAM_BRDIR, CPX_BRDIR_DOWN);  //CPX_BRDIR_DOWN o CPX_BRDIR_AUTO  o CPX_BRDIR_UP
+    CPXsetintparam (env, CPX_PARAM_LBHEUR, CPX_OFF);        // local branching heuristic
+    CPXsetintparam (env, CPX_PARAM_STRONGITLIM, 1);         //MIP strong branching iterations limit 0(auto) o positivo
+    CPXsetintparam (env, CPX_PARAM_ZEROHALFCUTS, -1);           // MIP zero-half cuts -1 0(auto) 1 2(agresivo)
+
 /*
     status = CPXsetcutcallbackfunc (env, cortes, NULL);
     if ( status )
@@ -474,9 +485,9 @@ int main (int argc, char *argv[]){
 	    printf("\nValor objetivo: %lf\n", objval);
 	    printf("Nodos: %d\n", nodos);
         printf("Tiempo: %lf\n", end-init);
-	    printf("\nSolucion:\n");
-	    for(int i = 0; i < numcols; i++)
-            printf("Col %d: %lf\n", i, x[i]);
+	    //printf("\nSolucion:\n");
+	    //for(int i = 0; i < numcols; i++)
+        //   printf("Col %d: %lf\n", i, x[i]);
     }
 
  TERMINATE:
@@ -493,6 +504,6 @@ int main (int argc, char *argv[]){
         }
     }
 
-    system("PAUSE");
+    //system("PAUSE");
     return 0;
 }
