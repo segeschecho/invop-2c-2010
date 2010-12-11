@@ -47,7 +47,7 @@ void buildGraphFromCol(const char* colFileName)
     finput = fopen(colFileName, "r");
     if( finput == NULL )
     {
-        printf("No se pudo leer el archivo %s", colFileName);
+        printf("No se pudo leer el archivo %s\n", colFileName);
         return;
     }
 
@@ -421,12 +421,12 @@ int main (int argc, char *argv[]){
     if( argv[1] != 0 )
         fileInput = argv[1];
     else
-        fileInput = "Coloreo.col";
+        fileInput = "test9-90.lp";
 
 //    g_nHeuristicColorBounds = heuristicBounds(fileInput.c_str());
 
     extensionOffset = fileInput.find_last_of(".");
-    if( fileInput.find_last_of(".col") )
+    if( fileInput.substr(extensionOffset, fileInput.size()).compare(".lp") != 0 )
     {
         string fileOutput = fileInput.substr(0, extensionOffset);
         fileOutput += ".lp";
