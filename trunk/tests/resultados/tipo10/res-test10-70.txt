@@ -1,0 +1,4 @@
+
+Valor objetivo: 5.000000
+Nodos: 2741
+Tiempo: 1.984000
