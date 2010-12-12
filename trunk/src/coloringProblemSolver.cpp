@@ -17,6 +17,15 @@ using namespace std;
 typedef int Node;
 typedef pair<int, int> Edge;
 
+struct cutinfo {
+   CPXLPptr lp;
+   int      nColumns;
+   int      nCutsLeft;
+   int      nCutsPerCall;
+   double   *x;
+};
+typedef struct cutinfo CUTINFO, *CUTINFOptr;
+
 /********* Declaracion de variables globales *********/
 double machineEps;
 vector< vector< bool > > g_vvbGraphTable;
@@ -31,10 +40,33 @@ static int CPXPUBLIC cortes (CPXCENVptr env,
                              void       *cbhandle,
                              int        *useraction_p)
 {
+    int status = 0;
+
+    CUTINFOptr cutinfo = (CUTINFOptr) cbhandle;
+    int      nColumns     = cutinfo->nColumns;
+    int      nCutsLeft    = cutinfo->nCutsLeft;
+    int      nCutsPerCall = cutinfo->nCutsPerCall;
+    double   *x           = cutinfo->x;
 
     *useraction_p = CPX_CALLBACK_DEFAULT;
 
-    //if(cantCortes > 0) *useraction_p = CPX_CALLBACK_SET;
+    // solo para debuguear:
+    double xDebug[12];
+    for( int i = 0; i < 12; i++ ) xDebug[i] = x[i];
+
+    if ( nCutsLeft <= 0 )
+        return status;
+
+    status = CPXgetcallbacknodex (env, cbdata, wherefrom, x, 0, nColumns-1); 
+    if ( status )
+    {
+        printf("Failed to get node solution.\n");
+        return status;
+    }
+
+    // add cut here
+
+   *useraction_p = CPX_CALLBACK_SET; 
     return 0;
 }
 
@@ -376,6 +408,10 @@ void colToLp(const char* colFileName, const char* lpFileName, int qtyColorsLower
     fclose(finput);
 }
 
+void InitializeCutInfo( CUTINFOptr cutinfo )
+{
+}
+
 int main (int argc, char *argv[]){
     int status = 0;
     double init,end;
@@ -414,14 +450,14 @@ int main (int argc, char *argv[]){
     CPXsetintparam (env, CPX_PARAM_STRONGITLIM, 5);         //MIP strong branching iterations limit 0(auto) o positivo
     CPXsetintparam (env, CPX_PARAM_ZEROHALFCUTS, 1);           // MIP zero-half cuts -1 0(auto) 1 2(agresivo)
 
-/*
-    status = CPXsetcutcallbackfunc (env, cortes, NULL);
-    if ( status )
-    {
-        printf("Problemas al setear rutina de separacion - %d.\n", status);
-        goto TERMINATE;
-    }
-*/
+
+    CUTINFO cutinfo;
+    cutinfo.nColumns = 0;
+    cutinfo.nCutsLeft = 0;
+    cutinfo.nCutsPerCall = 0;
+    cutinfo.lp = 0;
+    cutinfo.x = 0;
+
     lp = CPXcreateprob (env, &status, "pp.lp");
     if ( lp == NULL )
     {
@@ -432,7 +468,7 @@ int main (int argc, char *argv[]){
     if( argv[1] != 0 )
         fileInput = argv[1];
     else
-        fileInput = "test9-90.lp";
+        fileInput = "test3-70.col";
 
 //    g_nHeuristicColorBounds = heuristicBounds(fileInput.c_str());
 
@@ -445,8 +481,6 @@ int main (int argc, char *argv[]){
         fileInput = fileOutput;
     }
 
-    // Start problem solving
-
     status = CPXreadcopyprob (env, lp, fileInput.c_str(), NULL);
     if ( status )
     {
@@ -454,33 +488,53 @@ int main (int argc, char *argv[]){
         goto TERMINATE;
     }
 
+    // initialization of cutinfo
+    int numcols = CPXgetnumcols (env, lp);
+    cutinfo.lp = lp;
+    cutinfo.nColumns = numcols;
+    cutinfo.nCutsLeft = 100;
+    cutinfo.nCutsPerCall = 8;
+    cutinfo.x = (double *) malloc (numcols * sizeof (double));
+    if ( cutinfo.x == NULL )
+    {
+        printf ("No memory for solution values.\n");
+        goto TERMINATE;
+    }
+
+    status = CPXsetcutcallbackfunc (env, cortes, &cutinfo);
+    if ( status )
+    {
+        printf("Problemas al setear rutina de separacion - %d.\n", status);
+        goto TERMINATE;
+    }
+
     CPXgettime(env,&init);
     status = CPXmipopt (env, lp);
     CPXgettime(env,&end);
 
-    if ( status ) {
+    if ( status )
+    {
         printf("Ver status - %d\n", status);
         goto TERMINATE;
     }
 
     status = CPXgetstat (env, lp);
-    if(status==CPX_STAT_UNBOUNDED) {
-        printf("Modelo no acotado\n");
-    } else if(status==CPXMIP_INFEASIBLE){
-	    printf("Problema Infactible\n");
-    } else if(status==CPXMIP_TIME_LIM_FEAS){
-        printf("Se fue de tiempo\n");
-    } else {
+    if(status==CPX_STAT_UNBOUNDED)        printf("Modelo no acotado\n");
+    else if(status==CPXMIP_INFEASIBLE)    printf("Problema Infactible\n");
+    else if(status==CPXMIP_TIME_LIM_FEAS) printf("Se fue de tiempo\n");
+    else
+    {
 	    double objval;
-	    int numcols = CPXgetnumcols (env, lp);
         int nodos = CPXgetnodecnt(env, lp);
 	    double* x;
         x = new double[numcols];
-	    status = CPXgetmipobjval (env, lp, &objval) || CPXgetmipx (env, lp,x,0,numcols-1);
-        if ( status ) {
-		    printf("Problemas al pedir la solucion - %d\n", status);
-                goto TERMINATE;
-          }
+	    status =    CPXgetmipobjval (env, lp, &objval) ||
+                    CPXgetmipx (env, lp, x, 0, numcols - 1);
+        if ( status )
+        {
+            printf("Problemas al pedir la solucion - %d\n", status);
+            goto TERMINATE;
+        }
 
 	    printf("\nValor objetivo: %lf\n", objval);
 	    printf("Nodos: %d\n", nodos);
@@ -493,17 +547,14 @@ int main (int argc, char *argv[]){
  TERMINATE:
     if ( lp != NULL ) {
         status = CPXfreeprob (env, &lp);
-        if ( status ) {
+        if ( status )
             fprintf (stderr, "CPXfreeprob %d.\n",status);
-        }
     }
     if ( env != NULL ) {
         status = CPXcloseCPLEX (&env);
-        if ( status ) {
+        if ( status )
             printf ("CPXclose %d\n",status);
-        }
     }
 
-    //system("PAUSE");
     return 0;
 }
