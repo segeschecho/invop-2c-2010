@@ -9,3 +9,4 @@ for /d %%X in (tipo*) do (
     acomodarDatos.py %%X\graficoTiempo.txt
     acomodarDatos.py %%X\graficoNodos.txt
 )
+crearM.py

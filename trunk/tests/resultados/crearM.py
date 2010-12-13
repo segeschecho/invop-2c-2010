@@ -1,5 +1,5 @@
 
-tipos = range(3, 13)
+tipos = range(1, 13)
 resTiempos = ""
 resNodos = ""
 
@@ -28,10 +28,19 @@ fresNodos.write(resNodos + "\n")
 #pongo el codigo para que haga el plot de todos los graficos
 for t in tipos:
     fresTiempos.write("plot(x, t" + str(t) + ")\n")
+    fresTiempos.write("legend('tipo"+str(t)+"')\n")
     fresTiempos.write("hold all\n")
     
     fresNodos.write("plot(x, t" + str(t) + ")\n")
+    fresNodos.write("legend('tipo"+str(t)+"')\n")
     fresNodos.write("hold all\n")
+l = "legend("
+for t in range(1, 12):
+    l += "'tipo" + str(t) + "',"
+
+l += "'tipo" + str(tipos[-1]) + "')"
+fresTiempos.write(l)
+fresNodos.write(l)
 
 fresTiempos.close()
 fresNodos.close()
