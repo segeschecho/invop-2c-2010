@@ -1,0 +1,34 @@
+\section{Ejercicio1}
+
+El objetivo de este ejercicio consiste en poner a prueba el problema de coloreo, variando algunos de los parámetros que $Cplex$ utiliza para resolver el problema. Los mismos son parámetros genéricos que forman parte del comportamiento que tiene $Cplex$ para computar la solución.
+
+En este caso en particular, se tomaron parámetros que se utilizan en el método de Branch and Bound. La prueba entonces, consiste en modificar los valores de dichos parámetros y observar como es el desempeño del proceso, en tiempo requerido y en cantidad de nodos creados por $Cplex$, hasta obtener la solución del problema.
+
+Los parámetros elegidos son los siguientes:
+
+\begin{itemize}
+\item \textbf{CPX\_PARAM\_BRDIR:} Este parámetro sirve para modificar la dirección en la cual se hará en branching en cada paso. Los posibles valores para el mismo son los siguientes:
+   \begin{itemize}
+   \item CPX\_BRDIR\_UP, que indica que el branching siempre debe hacerse por la parte superior.
+   \item CPX\_BRDIR\_DOWN, que indica que el branching debe hacerse por la parte inferior.
+   \item CPX\_BRDIR\_AUTO, que indica que $Cplex$ decidirá que camino tomar.
+   \end{itemize}
+
+\item \textbf{CPX\_PARAM\_LBHEUR:} Indica si las heurísticas locales en cada branching están o no activadas. Los valores para el mismo son: CPX\_ON y CPX\_OFF.
+
+\item \textbf{CPX\_PARAM\_VARSEL:} CPX\_PARAM\_LBHEUR depende de este parámetro, que indica que estrategia usar para seleccionar una variable antes de realizar el branching. Los posibles valores son:
+    \begin{itemize}
+    \item CPX\_VARSEL\_MININFEAS, que realiza el branch con la variable con inviabilidad mínima (es decir, la variable fraccionaria mas cercana a algún valor entero).
+    \item CPX\_VARSEL\_MAXINFEAS, que realiza el braching con la variable mas inviable(es decir la mas lejana a un valor entero)
+    \item CPX\_VARSEL\_PSEUDO, la variable es elegida a través de pseudo costos.
+    \item CPX\_VARSEL\_PSEUDO, elije la variable a través de la resolución de diferentes sub problemas que permiten saber cuan prometedora es la elección de dicha variable.
+    \item CPX\_VARSEL\_PSEUDOREDUCED, selecciona la variable basado en costos.
+    \end{itemize}
+
+\item \textbf{CPX\_PARAM\_STRONGITLIM:} Indica el límite de iteraciones a realizar en cada una de las variables candidatas para realizar el branching. Los valores que puede tomar son: 0, automatico o un número positivo, que indica las iteraciones fijas a realizar.
+
+\item \textbf{CPX\_PARAM\_ZEROHALFCUTS:} Aquí se indica si se harán o no cortes de tipo parte entera hacia abajo para los valores de algunas de las restricciones. Los posibles valores son: -1, desactivado, 0 automatico, 1 normal y 2 agresivo.
+\end{itemize}
+
+\subsection{Pruebas realizadas}
+
