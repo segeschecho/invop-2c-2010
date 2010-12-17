@@ -1,5 +1,6 @@
 
-tipos = range(1, 13)
+#tipos = range(1, 13)
+tipos = range(1, 25)
 resTiempos = ""
 resNodos = ""
 

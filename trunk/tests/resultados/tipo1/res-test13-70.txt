@@ -1,4 +1,4 @@
 
 Valor objetivo: 7.000000
-Nodos: 145079
-Tiempo: 211.657000
+Nodos: 2470034
+Tiempo: 2264.782000
