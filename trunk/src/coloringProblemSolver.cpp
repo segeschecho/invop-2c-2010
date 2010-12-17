@@ -57,7 +57,7 @@ static int CPXPUBLIC cortes (CPXCENVptr env,
     if ( nCutsLeft <= 0 )
         return status;
 
-    status = CPXgetcallbacknodex (env, cbdata, wherefrom, x, 0, nColumns-1); 
+    status = CPXgetcallbacknodex (env, cbdata, wherefrom, x, 0, nColumns-1);
     if ( status )
     {
         printf("Failed to get node solution.\n");
@@ -66,7 +66,7 @@ static int CPXPUBLIC cortes (CPXCENVptr env,
 
     // add cut here
 
-   *useraction_p = CPX_CALLBACK_SET; 
+   *useraction_p = CPX_CALLBACK_SET;
     return 0;
 }
 
@@ -87,15 +87,16 @@ void buildGraphFromCol(const char* colFileName)
     char* format = new char[BUFFERSIZE];
     int nodes = 0;
     int edges = 0;
+    //leemos la informacion y armamos el grafo
     while( (c = getc(finput)) != EOF )
     {
         switch(c)
         {
-        case 'c':
+        case 'c': //es un comentario
             while( (c = getc(finput)) != '\n' ){}
             break;
 
-        case 'p':
+        case 'p': //descripcion del contenido
             getc(finput); // skip space
             int i;
             for( i = 0; i < BUFFERSIZE && (c = getc(finput)) != ' '; i++ )
@@ -108,7 +109,7 @@ void buildGraphFromCol(const char* colFileName)
             g_vvEGraphAdjList = vector< vector< Edge > >( nodes, vector< Edge >() );
             break;
 
-        case 'e':
+        case 'e': //es un eje
             getc(finput); // skip space
             int node1, node2;
             fscanf(finput, "%d %d\n", &node1, &node2);
@@ -129,6 +130,19 @@ void buildGraphFromCol(const char* colFileName)
 }
 
 //////////////////////////////////////////////////////////////////////////
+int SearchNodoUnTouch(bool *anodosU, int nodos){
+    int nodoU = -1;
+    int i = 0;
+
+    while(anodosU[i] && i < nodos){
+        i++;
+    }
+
+    if(i != nodos)
+        nodoU = i;
+
+    return nodoU;
+}
 
 int minAvailableColor( Node node, vector< int > coloring, int qtyColorsUsed )
 {
@@ -159,28 +173,35 @@ int heuristicBFSUpperBound()
     int nNodes = g_vvbGraphTable.size();
     vector< int > vvnColoring( nNodes, 0 );
     list< Node > lNNodesStack;
+    bool *anodosUnTouched = new bool[nNodes];
+    int nodoU = -1;
     int nColors = 0;
 
     if ( nNodes == 0 )
         return nColors;
-
-    lNNodesStack.push_back(0);
-    while ( !lNNodesStack.empty() )
-    {
-        int nCurrentNode = lNNodesStack.front();
-        lNNodesStack.pop_front();
-
-        int nodeColor = minAvailableColor( nCurrentNode, vvnColoring, nColors );
-        vvnColoring[ nCurrentNode ] = nodeColor;
-        if ( nodeColor > nColors )
-            nColors = nodeColor;
-
-        vector< Edge >& adj = g_vvEGraphAdjList[ nCurrentNode ];
-        for ( int i = 0; i < adj.size(); i++ )
+    //para cada nodo que no haya sido tocado hacemos dfs
+    while ((nodoU =  SearchNodoUnTouch(anodosUnTouched, nNodes)) != -1){
+        lNNodesStack.push_back(nodoU);
+        //coloreamos los nodos apartir de nodo inicial haciendo dfs
+        while ( !lNNodesStack.empty() )
         {
-            Node neighbor = adj[i].second;
-            if ( !vvnColoring[ neighbor ] )
-                lNNodesStack.push_back( neighbor );
+            int nCurrentNode = lNNodesStack.front();
+            lNNodesStack.pop_front();
+
+            anodosUnTouched[nCurrentNode] = true;
+
+            int nodeColor = minAvailableColor( nCurrentNode, vvnColoring, nColors );
+            vvnColoring[ nCurrentNode ] = nodeColor;
+            if ( nodeColor > nColors )
+                nColors = nodeColor;
+
+            vector< Edge >& adj = g_vvEGraphAdjList[ nCurrentNode ];
+            for ( int i = 0; i < adj.size(); i++ )
+            {
+                Node neighbor = adj[i].second;
+                if ( !vvnColoring[ neighbor ] )
+                    lNNodesStack.push_back( neighbor );
+            }
         }
     }
 
@@ -303,9 +324,8 @@ pair<int, int> heuristicBounds(const char* colFileName)
 {
     buildGraphFromCol(colFileName);
     pair<int, int> res( 0, g_vvbGraphTable.size() );
-    res.first = min(heuristicBFSUpperBound(), heuristicSequentialUpperBound());
-    res.second = heuristicCliqueLowerBound(LOWER_BOUND_HEURISTIC_MAX_ITERATIONS);
-
+    res.second = min(heuristicBFSUpperBound(), heuristicSequentialUpperBound());
+    res.first = heuristicCliqueLowerBound(LOWER_BOUND_HEURISTIC_MAX_ITERATIONS);
     return res;
 }
 
@@ -417,12 +437,14 @@ int main (int argc, char *argv[]){
     double init,end;
     string fileInput;
     size_t extensionOffset;
+    int numcols = 0;
 
     CPXENVptr env = NULL;
     CPXLPptr  lp = NULL;
     machineEps = 0.000001;
     g_nHeuristicColorBounds = pair<int, int>( -1, -1 );
 
+    //Inicializamos el entorno
     env = CPXopenCPLEX (&status);
     if ( env == NULL )
     {
@@ -430,26 +452,25 @@ int main (int argc, char *argv[]){
         goto TERMINATE;
     }
 
-    /*Parametros para que no preprocese*/
+    ////Parametros para que no preprocese
     CPXsetintparam (env, CPX_PARAM_REDUCE,CPX_OFF);
     CPXsetintparam (env, CPX_PARAM_PRELINEAR, 0);
     CPXsetintparam (env, CPX_PARAM_MIPCBREDLP, CPX_OFF);
 
-    /*parametros para que no haga cortes*/
-    CPXsetintparam(env,CPX_PARAM_CUTPASS,-1);     //Number of cutting plane passes
-    CPXsetdblparam(env,CPX_PARAM_CUTSFACTOR,0.0); //Row multiplier factor for cuts
+    //parametros para que no haga cortes
+    CPXsetintparam(env,CPX_PARAM_CUTPASS,-1);             //Number of cutting plane passes
+    CPXsetdblparam(env,CPX_PARAM_CUTSFACTOR,0.0);         //Row multiplier factor for cuts
 
-    /*Parametros para salida por pantalla*/
-    CPXsetintparam (env, CPX_PARAM_SCRIND, CPX_OFF); //para mostrar las iteraciones
-    CPXsetintparam (env, CPX_PARAM_MIPINTERVAL, 1);  //para el log
-    CPXsetintparam (env, CPX_PARAM_MIPDISPLAY, 3);   //muestra las soluciones y los cortes
+    //Parametros para salida por pantalla
+    CPXsetintparam (env, CPX_PARAM_SCRIND, CPX_OFF);      //para mostrar las iteraciones
+    CPXsetintparam (env, CPX_PARAM_MIPINTERVAL, 1);       //para el log
+    CPXsetintparam (env, CPX_PARAM_MIPDISPLAY, 3);        //muestra las soluciones y los cortes
 
     ///Parametros para elegir las estrategias de branching
     CPXsetintparam (env, CPX_PARAM_BRDIR, CPX_BRDIR_UP);  //CPX_BRDIR_DOWN o CPX_BRDIR_AUTO  o CPX_BRDIR_UP
-    CPXsetintparam (env, CPX_PARAM_LBHEUR, CPX_ON);        // local branching heuristic
-    CPXsetintparam (env, CPX_PARAM_STRONGITLIM, 5);         //MIP strong branching iterations limit 0(auto) o positivo
-    CPXsetintparam (env, CPX_PARAM_ZEROHALFCUTS, 1);           // MIP zero-half cuts -1 0(auto) 1 2(agresivo)
-
+    CPXsetintparam (env, CPX_PARAM_LBHEUR, CPX_ON);       //local branching heuristic
+    CPXsetintparam (env, CPX_PARAM_STRONGITLIM, 5);       //MIP strong branching iterations limit 0(auto) o positivo
+    CPXsetintparam (env, CPX_PARAM_ZEROHALFCUTS, 1);      // MIP zero-half cuts -1 0(auto) 1 2(agresivo)
 
     CUTINFO cutinfo;
     cutinfo.nColumns = 0;
@@ -470,8 +491,12 @@ int main (int argc, char *argv[]){
     else
         fileInput = "test3-70.col";
 
-//    g_nHeuristicColorBounds = heuristicBounds(fileInput.c_str());
+    //Heuristicas iniciales
+    g_nHeuristicColorBounds = heuristicBounds(fileInput.c_str());
 
+    printf("res inf: %i res sup: %i", g_nHeuristicColorBounds.first, g_nHeuristicColorBounds.second);
+
+    //si la extension no es .lp suponemos que es un archivo con formato .col
     extensionOffset = fileInput.find_last_of(".");
     if( fileInput.substr(extensionOffset, fileInput.size()).compare(".lp") != 0 )
     {
@@ -481,6 +506,7 @@ int main (int argc, char *argv[]){
         fileInput = fileOutput;
     }
 
+    //leemos el problema
     status = CPXreadcopyprob (env, lp, fileInput.c_str(), NULL);
     if ( status )
     {
@@ -488,8 +514,8 @@ int main (int argc, char *argv[]){
         goto TERMINATE;
     }
 
-    // initialization of cutinfo
-    int numcols = CPXgetnumcols (env, lp);
+    // inicializacion de info de cortes
+    numcols = CPXgetnumcols (env, lp);
     cutinfo.lp = lp;
     cutinfo.nColumns = numcols;
     cutinfo.nCutsLeft = 100;
@@ -501,6 +527,7 @@ int main (int argc, char *argv[]){
         goto TERMINATE;
     }
 
+    //asignamos la heuristica de separacion al problema
     status = CPXsetcutcallbackfunc (env, cortes, &cutinfo);
     if ( status )
     {
@@ -514,14 +541,14 @@ int main (int argc, char *argv[]){
 
     if ( status )
     {
-        printf("Ver status - %d\n", status);
+        printf("Hubo un problema. Ver status - %d\n", status);
         goto TERMINATE;
     }
 
     status = CPXgetstat (env, lp);
-    if(status==CPX_STAT_UNBOUNDED)        printf("Modelo no acotado\n");
-    else if(status==CPXMIP_INFEASIBLE)    printf("Problema Infactible\n");
-    else if(status==CPXMIP_TIME_LIM_FEAS) printf("Se fue de tiempo\n");
+    if (status == CPX_STAT_UNBOUNDED)        printf("Modelo no acotado\n");
+    else if (status == CPXMIP_INFEASIBLE)    printf("Problema Infactible\n");
+    else if (status == CPXMIP_TIME_LIM_FEAS) printf("Se fue de tiempo\n");
     else
     {
 	    double objval;
