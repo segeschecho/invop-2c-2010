@@ -1,4 +1,4 @@
 
 Valor objetivo: 3.000000
-Nodos: 3
+Nodos: 9
 Tiempo: 0.000000
