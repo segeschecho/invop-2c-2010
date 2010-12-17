@@ -20,9 +20,6 @@ typedef pair<int, int> Edge;
 struct cutinfo {
    CPXLPptr lp;
    int      nColumns;
-   int      nCutsLeft;
-   int      nCutsPerCall;
-   double   *x;
 };
 typedef struct cutinfo CUTINFO, *CUTINFOptr;
 
@@ -31,6 +28,8 @@ double machineEps;
 vector< vector< bool > > g_vvbGraphTable;
 vector< vector< Edge > > g_vvEGraphAdjList;
 pair< int, int > g_nHeuristicColorBounds;
+int g_nNodes;
+int g_nEdges;
 
 /********* Implementacion de Funciones *********/
 
@@ -43,21 +42,15 @@ static int CPXPUBLIC cortes (CPXCENVptr env,
     int status = 0;
 
     CUTINFOptr cutinfo = (CUTINFOptr) cbhandle;
-    int      nColumns     = cutinfo->nColumns;
-    int      nCutsLeft    = cutinfo->nCutsLeft;
-    int      nCutsPerCall = cutinfo->nCutsPerCall;
-    double   *x           = cutinfo->x;
+    int nColumns = cutinfo->nColumns;
+    double* x;
 
     *useraction_p = CPX_CALLBACK_DEFAULT;
 
+    status = CPXgetcallbacknodex (env, cbdata, wherefrom, x, 0, nColumns - 1);
     // solo para debuguear:
-    double xDebug[12];
-    for( int i = 0; i < 12; i++ ) xDebug[i] = x[i];
+    double xDebug[12]; for( int i = 0; i < 12; i++ ) xDebug[i] = x[i];
 
-    if ( nCutsLeft <= 0 )
-        return status;
-
-    status = CPXgetcallbacknodex (env, cbdata, wherefrom, x, 0, nColumns-1);
     if ( status )
     {
         printf("Failed to get node solution.\n");
@@ -85,8 +78,8 @@ void buildGraphFromCol(const char* colFileName)
 
     char c;
     char* format = new char[BUFFERSIZE];
-    int nodes = 0;
-    int edges = 0;
+    g_nNodes = 0;
+    g_nEdges = 0;
     //leemos la informacion y armamos el grafo
     while( (c = getc(finput)) != EOF )
     {
@@ -102,11 +95,11 @@ void buildGraphFromCol(const char* colFileName)
             for( i = 0; i < BUFFERSIZE && (c = getc(finput)) != ' '; i++ )
                 format[i] = c;
             format[i] = '\0';
-            fscanf(finput, "%d %d\n", &nodes, &edges);
+            fscanf(finput, "%d %d\n", &g_nNodes, &g_nEdges);
 
             // initialize graph structures
-            g_vvbGraphTable = vector< vector< bool > >( nodes, vector< bool >(nodes, false) );
-            g_vvEGraphAdjList = vector< vector< Edge > >( nodes, vector< Edge >() );
+            g_vvbGraphTable = vector< vector< bool > >( g_nNodes, vector< bool >(g_nNodes, false) );
+            g_vvEGraphAdjList = vector< vector< Edge > >( g_nNodes, vector< Edge >() );
             break;
 
         case 'e': //es un eje
@@ -130,18 +123,17 @@ void buildGraphFromCol(const char* colFileName)
 }
 
 //////////////////////////////////////////////////////////////////////////
-int SearchNodoUnTouch(bool *anodosU, int nodos){
-    int nodoU = -1;
+
+inline int getNonVisitedNode(bool* pbNonVisitedNodes)
+{
     int i = 0;
-
-    while(anodosU[i] && i < nodos){
+    while (pbNonVisitedNodes[i] && i < g_nNodes)
         i++;
-    }
 
-    if(i != nodos)
-        nodoU = i;
+    if (i < g_nNodes)
+        return i;
 
-    return nodoU;
+    return -1;
 }
 
 int minAvailableColor( Node node, vector< int > coloring, int qtyColorsUsed )
@@ -160,9 +152,7 @@ int minAvailableColor( Node node, vector< int > coloring, int qtyColorsUsed )
     if( vbAdjColorUsed.size() > 0 )
     {
         while (vbAdjColorUsed[ minColor ])
-        {
             minColor++;
-        }
     }
 
     return minColor + 1;
@@ -170,25 +160,27 @@ int minAvailableColor( Node node, vector< int > coloring, int qtyColorsUsed )
 
 int heuristicBFSUpperBound()
 {
-    int nNodes = g_vvbGraphTable.size();
-    vector< int > vvnColoring( nNodes, 0 );
-    list< Node > lNNodesStack;
-    bool *anodosUnTouched = new bool[nNodes];
-    int nodoU = -1;
+    if ( g_nNodes == 0 )
+        return 0;
+
+    vector< int > vvnColoring( g_nNodes, 0 );
+    list< Node > lNNodesQueue;
+    bool *pbNonVisitedNodes = new bool[g_nNodes];
+    Node nNVNode = -1;
     int nColors = 0;
 
-    if ( nNodes == 0 )
-        return nColors;
-    //para cada nodo que no haya sido tocado hacemos dfs
-    while ((nodoU =  SearchNodoUnTouch(anodosUnTouched, nNodes)) != -1){
-        lNNodesStack.push_back(nodoU);
-        //coloreamos los nodos apartir de nodo inicial haciendo dfs
-        while ( !lNNodesStack.empty() )
+    // para cada nodo que no haya sido visitado hacemos bfs
+    nNVNode =  getNonVisitedNode(pbNonVisitedNodes);
+    while (nNVNode != -1)
+    {
+        lNNodesQueue.push_back(nNVNode);
+        // coloreamos los nodos en orden bfs
+        while ( !lNNodesQueue.empty() )
         {
-            int nCurrentNode = lNNodesStack.front();
-            lNNodesStack.pop_front();
+            int nCurrentNode = lNNodesQueue.front();
+            lNNodesQueue.pop_front();
 
-            anodosUnTouched[nCurrentNode] = true;
+            pbNonVisitedNodes[nCurrentNode] = true;
 
             int nodeColor = minAvailableColor( nCurrentNode, vvnColoring, nColors );
             vvnColoring[ nCurrentNode ] = nodeColor;
@@ -200,9 +192,12 @@ int heuristicBFSUpperBound()
             {
                 Node neighbor = adj[i].second;
                 if ( !vvnColoring[ neighbor ] )
-                    lNNodesStack.push_back( neighbor );
+                    lNNodesQueue.push_back( neighbor );
             }
         }
+
+        // buscamos el siguiente nodo no visitado
+        nNVNode =  getNonVisitedNode(pbNonVisitedNodes);
     }
 
     return nColors;
@@ -210,15 +205,14 @@ int heuristicBFSUpperBound()
 
 int heuristicSequentialUpperBound()
 {
-    int nNodes = g_vvbGraphTable.size();
-    vector< int > vvnColoring( nNodes, 0 );
+    vector< int > vvnColoring( g_nNodes, 0 );
     int nColors = 0;
 
-    if ( nNodes == 0 )
+    if ( g_nNodes == 0 )
         return nColors;
 
     vector< pair<int, Node> > vnNodeDegree;
-    for( Node nCurrentNode = 0; nCurrentNode < nNodes; nCurrentNode++ )
+    for( Node nCurrentNode = 0; nCurrentNode < g_nNodes; nCurrentNode++ )
         vnNodeDegree.push_back( pair<int, Node>(g_vvEGraphAdjList[nCurrentNode].size(), nCurrentNode) );
 
     sort( vnNodeDegree.begin(), vnNodeDegree.end() );
@@ -237,17 +231,16 @@ int heuristicSequentialUpperBound()
 // New-Best-In algorithm
 int maximalClique( Node startingNode )
 {
-    int nNodes = g_vvbGraphTable.size();
-    if ( nNodes == 0 )
+    if ( g_nNodes == 0 )
         return 0;
 
     // Set V1 = V
-    vector< bool > vbNodeIsAvailable( nNodes, true );
-    int nAvailableNodes = nNodes;
+    vector< bool > vbNodeIsAvailable( g_nNodes, true );
+    int nAvailableNodes = g_nNodes;
 
     // Construct the vector of vertex degrees
     vector< int > vnVertexDegree;
-    for ( Node node = 0; node < nNodes; node++ )
+    for ( Node node = 0; node < g_nNodes; node++ )
         vnVertexDegree.push_back( g_vvEGraphAdjList[node].size() );
 
     Node nCurrentNode = startingNode;
@@ -260,10 +253,10 @@ int maximalClique( Node startingNode )
     {
         // Set Vk+1 = { v | v in Vk and v in N(vk) }.
         vector< bool > vbAux = vbNodeIsAvailable;
-        for ( int node = 0; node < nNodes; node++ )
+        for ( int node = 0; node < g_nNodes; node++ )
             vbAux[node] = vbNodeIsAvailable[node] && g_vvbGraphTable[nCurrentNode][node];
 
-        for ( int node = 0; node < nNodes; node++ )
+        for ( int node = 0; node < g_nNodes; node++ )
         {
             if( vbNodeIsAvailable[node] && ! vbAux[node] )
             {
@@ -282,7 +275,7 @@ int maximalClique( Node startingNode )
         nCurrentNode = -1;
         nCurrentNodeDegree = -1;
         // Choose a vertex vk from Vk such that degree(vk) is greatest
-        for ( Node node = 0; node < nNodes; node++ )
+        for ( Node node = 0; node < g_nNodes; node++ )
         {
             if( vbNodeIsAvailable[ node ] )
             {
@@ -301,9 +294,8 @@ int maximalClique( Node startingNode )
 
 int heuristicCliqueLowerBound( int iterations )
 {
-    int nNodes = g_vvbGraphTable.size();
     vector< pair<int, Node> > vnNodeDegree;
-    for( Node nCurrentNode = 0; nCurrentNode < nNodes; nCurrentNode++ )
+    for( Node nCurrentNode = 0; nCurrentNode < g_nNodes; nCurrentNode++ )
         vnNodeDegree.push_back( pair<int, Node>(g_vvEGraphAdjList[nCurrentNode].size(), nCurrentNode) );
 
     sort( vnNodeDegree.begin(), vnNodeDegree.end() );
@@ -323,7 +315,7 @@ int heuristicCliqueLowerBound( int iterations )
 pair<int, int> heuristicBounds(const char* colFileName)
 {
     buildGraphFromCol(colFileName);
-    pair<int, int> res( 0, g_vvbGraphTable.size() );
+    pair<int, int> res( 0, g_nNodes );
     res.second = min(heuristicBFSUpperBound(), heuristicSequentialUpperBound());
     res.first = heuristicCliqueLowerBound(LOWER_BOUND_HEURISTIC_MAX_ITERATIONS);
     return res;
@@ -474,10 +466,7 @@ int main (int argc, char *argv[]){
 
     CUTINFO cutinfo;
     cutinfo.nColumns = 0;
-    cutinfo.nCutsLeft = 0;
-    cutinfo.nCutsPerCall = 0;
     cutinfo.lp = 0;
-    cutinfo.x = 0;
 
     lp = CPXcreateprob (env, &status, "pp.lp");
     if ( lp == NULL )
@@ -494,7 +483,7 @@ int main (int argc, char *argv[]){
     //Heuristicas iniciales
     g_nHeuristicColorBounds = heuristicBounds(fileInput.c_str());
 
-    printf("res inf: %i res sup: %i", g_nHeuristicColorBounds.first, g_nHeuristicColorBounds.second);
+    printf("Heuristicas: cota inf = %i, cota sup = %i", g_nHeuristicColorBounds.first, g_nHeuristicColorBounds.second);
 
     //si la extension no es .lp suponemos que es un archivo con formato .col
     extensionOffset = fileInput.find_last_of(".");
@@ -518,14 +507,6 @@ int main (int argc, char *argv[]){
     numcols = CPXgetnumcols (env, lp);
     cutinfo.lp = lp;
     cutinfo.nColumns = numcols;
-    cutinfo.nCutsLeft = 100;
-    cutinfo.nCutsPerCall = 8;
-    cutinfo.x = (double *) malloc (numcols * sizeof (double));
-    if ( cutinfo.x == NULL )
-    {
-        printf ("No memory for solution values.\n");
-        goto TERMINATE;
-    }
 
     //asignamos la heuristica de separacion al problema
     status = CPXsetcutcallbackfunc (env, cortes, &cutinfo);
