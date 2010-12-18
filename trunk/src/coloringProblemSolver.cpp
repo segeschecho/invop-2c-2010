@@ -485,12 +485,12 @@ int main (int argc, char *argv[]){
     CPXsetintparam (env, CPX_PARAM_MIPDISPLAY, 3);        //muestra las soluciones y los cortes
 
     ///Parametros para elegir las estrategias de branching
-    CPXsetintparam (env, CPX_PARAM_BRDIR, CPX_BRDIR_UP);            //CPX_BRDIR_DOWN o CPX_BRDIR_AUTO  o CPX_BRDIR_UP
-    CPXsetintparam (env, CPX_PARAM_LBHEUR, CPX_ON);                 //local branching heuristic
-    CPXsetintparam (env, CPX_PARAM_STRONGITLIM, 2);                 //MIP strong branching iterations limit 0(auto) o positivo
+    CPXsetintparam (env, CPX_PARAM_BRDIR, CPX_BRDIR_AUTO);            //CPX_BRDIR_DOWN o CPX_BRDIR_AUTO  o CPX_BRDIR_UP
+    CPXsetintparam (env, CPX_PARAM_LBHEUR, CPX_ON);                 //local branching heuristic OFF(default)
+    CPXsetintparam (env, CPX_PARAM_STRONGITLIM, 5);                 //MIP strong branching iterations limit 0(auto) o positivo
     CPXsetintparam (env, CPX_PARAM_ZEROHALFCUTS, 1);                // MIP zero-half cuts -1 0(auto) 1 2(agresivo)
     CPXsetintparam (env, CPX_PARAM_VARSEL, CPX_VARSEL_DEFAULT);     //variable selection, menos inviable, mas inviable
-    CPXsetintparam (env, CPX_PARAM_NODESEL, CPX_NODESEL_BESTBOUND); //node selection strategy, BESTBOUND(default), DFS
+    CPXsetintparam (env, CPX_PARAM_NODESEL, CPX_NODESEL_BESTEST); //node selection strategy, BESTBOUND(default), DFS, BESTEST
 
     CUTINFO cutinfo;
     cutinfo.nColumns = 0;
