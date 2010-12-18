@@ -1,0 +1,1 @@
+Resultados de los tests con grafos de 3 a 13 nodos. Sin heuristicas iniciales, con el parametro CPX_PARAM_VARSEL en MININFEAS y MAXINFEAS. 24 TIPOS de tests corridos.

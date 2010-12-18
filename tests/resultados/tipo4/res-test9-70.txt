@@ -1,4 +1,4 @@
-
-Valor objetivo: 5.000000
-Nodos: 5411
-Tiempo: 2.000000
+Heuristicas: cota inf = 5, cota sup = 5 
+Coloreo: 5.000000
+Nodos: 0
+Tiempo: 0.016000

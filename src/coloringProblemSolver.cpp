@@ -480,15 +480,17 @@ int main (int argc, char *argv[]){
     CPXsetdblparam(env,CPX_PARAM_CUTSFACTOR,0.0);         //Row multiplier factor for cuts
 
     //Parametros para salida por pantalla
-    CPXsetintparam (env, CPX_PARAM_SCRIND, CPX_ON);      //para mostrar las iteraciones
+    CPXsetintparam (env, CPX_PARAM_SCRIND, CPX_OFF);      //para mostrar las iteraciones
     CPXsetintparam (env, CPX_PARAM_MIPINTERVAL, 1);       //para el log
     CPXsetintparam (env, CPX_PARAM_MIPDISPLAY, 3);        //muestra las soluciones y los cortes
 
     ///Parametros para elegir las estrategias de branching
-    CPXsetintparam (env, CPX_PARAM_BRDIR, CPX_BRDIR_UP);  //CPX_BRDIR_DOWN o CPX_BRDIR_AUTO  o CPX_BRDIR_UP
-    CPXsetintparam (env, CPX_PARAM_LBHEUR, CPX_ON);       //local branching heuristic
-    CPXsetintparam (env, CPX_PARAM_STRONGITLIM, 5);       //MIP strong branching iterations limit 0(auto) o positivo
-    CPXsetintparam (env, CPX_PARAM_ZEROHALFCUTS, 1);      // MIP zero-half cuts -1 0(auto) 1 2(agresivo)
+    CPXsetintparam (env, CPX_PARAM_BRDIR, CPX_BRDIR_UP);            //CPX_BRDIR_DOWN o CPX_BRDIR_AUTO  o CPX_BRDIR_UP
+    CPXsetintparam (env, CPX_PARAM_LBHEUR, CPX_ON);                 //local branching heuristic
+    CPXsetintparam (env, CPX_PARAM_STRONGITLIM, 2);                 //MIP strong branching iterations limit 0(auto) o positivo
+    CPXsetintparam (env, CPX_PARAM_ZEROHALFCUTS, 1);                // MIP zero-half cuts -1 0(auto) 1 2(agresivo)
+    CPXsetintparam (env, CPX_PARAM_VARSEL, CPX_VARSEL_DEFAULT);     //variable selection, menos inviable, mas inviable
+    CPXsetintparam (env, CPX_PARAM_NODESEL, CPX_NODESEL_BESTBOUND); //node selection strategy, BESTBOUND(default), DFS
 
     CUTINFO cutinfo;
     cutinfo.nColumns = 0;
@@ -509,7 +511,7 @@ int main (int argc, char *argv[]){
     //Heuristicas iniciales
     g_nHeuristicColorBounds = heuristicBounds(fileInput.c_str());
 
-    printf("Heuristicas: cota inf = %i, cota sup = %i", g_nHeuristicColorBounds.first, g_nHeuristicColorBounds.second);
+    printf("Heuristicas: cota inf = %i, cota sup = %i \n", g_nHeuristicColorBounds.first, g_nHeuristicColorBounds.second);
 
     //si la extension no es .lp suponemos que es un archivo con formato .col
     extensionOffset = fileInput.find_last_of(".");

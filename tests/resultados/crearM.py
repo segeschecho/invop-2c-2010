@@ -1,6 +1,13 @@
+import sys
 
+if(sys.argv > 1):
+    TIPOSTEST = int(sys.argv[1])
+else:
+    print "Falta el parametro de la cantidad de tipos de test"
+    sys.exit()
+ 
 #tipos = range(1, 13)
-tipos = range(1, 25)
+tipos = range(1, TIPOSTEST)
 resTiempos = ""
 resNodos = ""
 
@@ -36,7 +43,7 @@ for t in tipos:
     fresNodos.write("legend('tipo"+str(t)+"')\n")
     fresNodos.write("hold all\n")
 l = "legend("
-for t in range(1, 12):
+for t in range(1, TIPOSTEST):
     l += "'tipo" + str(t) + "',"
 
 l += "'tipo" + str(tipos[-1]) + "')"

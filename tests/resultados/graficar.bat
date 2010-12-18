@@ -9,4 +9,6 @@ for /d %%X in (tipo*) do (
     acomodarDatos.py %%X\graficoTiempo.txt
     acomodarDatos.py %%X\graficoNodos.txt
 )
-crearM.py
+::Creo los archivos matlab de acuerdo a la cantidad de tipos de test
+::(siempre uno mas de los que son, si son 12 tipos, poner 13)
+crearM.py 13

@@ -1,0 +1,1 @@
+Resultados obtenidos con grafos de 3 a 13 nodos, sin heuristicas iniciales y con el parametro CPX_PARAM_VARSEL en DEFAULT. 12 TIPOS de test.
