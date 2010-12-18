@@ -1,4 +1,4 @@
-
-Valor objetivo: 4.000000
-Nodos: 154
-Tiempo: 0.047000
+Heuristicas: cota inf = 4, cota sup = 4 
+Coloreo: 4.000000
+Nodos: 0
+Tiempo: 0.000000
