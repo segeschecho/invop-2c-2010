@@ -8,7 +8,7 @@ using namespace std;
 /********* Declaracion de constantes *********/
 
 #define BUFFERSIZE 256
-#define LOWER_BOUND_HEURISTIC_MAX_ITERATIONS 3
+#define LOWER_BOUND_HEURISTIC_MAX_ITERATIONS 1
 #define min(a, b) (a) < (b) ? (a) : (b)
 #define max(a, b) (a) > (b) ? (a) : (b)
 
@@ -33,6 +33,16 @@ int g_nEdges;
 
 /********* Implementacion de Funciones *********/
 
+typedef struct _columnValue {
+    int nColumn;
+    double nValue;
+} ColumnValue;
+
+inline int comparePtrDouble (const void * a, const void * b)
+{
+    return ( (**(double**)a) - (**(double**)b) );
+}
+
 static int CPXPUBLIC cortes (CPXCENVptr env,
                              void       *cbdata,
                              int        wherefrom,
@@ -43,23 +53,33 @@ static int CPXPUBLIC cortes (CPXCENVptr env,
 
     CUTINFOptr cutinfo = (CUTINFOptr) cbhandle;
     int nColumns = cutinfo->nColumns;
-    double* x;
+    double* x = new double[nColumns];
 
     *useraction_p = CPX_CALLBACK_DEFAULT;
 
     status = CPXgetcallbacknodex (env, cbdata, wherefrom, x, 0, nColumns - 1);
-    // solo para debuguear:
-    double xDebug[12]; for( int i = 0; i < 12; i++ ) xDebug[i] = x[i];
-
     if ( status )
     {
         printf("Failed to get node solution.\n");
         return status;
     }
 
-    // add cut here
+    // corte por clique:
+    double** pValues = new double*[nColumns];
+    int nFractionalsLowerTo1 = 0;
+    for (int col = 0; col < nColumns; col++)
+    {
+        if( x[col] < 1.0 )
+            nFractionalsLowerTo1++;
+        pValues[col] = &x[col];
+    }
+    // solo para debuguear:
+    qsort(pValues, nColumns, sizeof(double*), comparePtrDouble);
 
-   *useraction_p = CPX_CALLBACK_SET;
+    // para sacar el nodo correspondiente a ese valor se puede hacer
+    // ((long)pValues[col] - (long)x) / sizeof(double)
+
+    *useraction_p = CPX_CALLBACK_SET;
     return 0;
 }
 
@@ -168,6 +188,9 @@ int heuristicBFSUpperBound()
     bool *pbNonVisitedNodes = new bool[g_nNodes];
     Node nNVNode = -1;
     int nColors = 0;
+
+    for(int i = 0; i < g_nNodes; i++)
+        pbNonVisitedNodes[i] = false;
 
     // para cada nodo que no haya sido visitado hacemos bfs
     nNVNode =  getNonVisitedNode(pbNonVisitedNodes);
@@ -316,14 +339,16 @@ pair<int, int> heuristicBounds(const char* colFileName)
 {
     buildGraphFromCol(colFileName);
     pair<int, int> res( 0, g_nNodes );
-    res.second = min(heuristicBFSUpperBound(), heuristicSequentialUpperBound());
+
     res.first = heuristicCliqueLowerBound(LOWER_BOUND_HEURISTIC_MAX_ITERATIONS);
+    res.second = min(heuristicBFSUpperBound(), heuristicSequentialUpperBound());
+
     return res;
 }
 
 //////////////////////////////////////////////////////////////////////////
 
-void colToLp(const char* colFileName, const char* lpFileName, int qtyColorsLowerBound, int qtyColorsUpperBound)
+void colToLp(const char* colFileName, const char* lpFileName, int coloringLowerBound, int coloringUpperBound)
 {
     FILE* finput;
     FILE* foutput;
@@ -344,8 +369,9 @@ void colToLp(const char* colFileName, const char* lpFileName, int qtyColorsLower
 
     char c;
     char* format = new char[BUFFERSIZE];
-    int nodes = 0;
-    int edges = 0;
+    g_nNodes = 0;
+    g_nEdges = 0;
+    int nColors = coloringUpperBound - coloringLowerBound;
 
     while( (c = getc(finput)) != EOF )
     {
@@ -365,24 +391,23 @@ void colToLp(const char* colFileName, const char* lpFileName, int qtyColorsLower
             for( i = 0; i < BUFFERSIZE && (c = getc(finput)) != ' '; i++ )
                 format[i] = c;
             format[i] = '\0';
-            fscanf(finput, "%d %d\n", &nodes, &edges);
+            fscanf(finput, "%d %d\n", &g_nNodes, &g_nEdges);
 
-            if( qtyColorsUpperBound < 0 )
-                qtyColorsUpperBound = nodes;
+            if( coloringUpperBound < 0 )
+                coloringUpperBound = g_nNodes;
             // begin building output file
             fprintf(foutput, "Minimize\n obj:");
-            if( nodes > 0 )
+            if( g_nNodes > 0 )
                 fprintf(foutput, " w0");
-            for( i = 1; i < qtyColorsUpperBound; i++ )
+            for( i = 1; i < nColors; i++ )
                 fprintf(foutput, " + w%d",i);
 
-
             fprintf(foutput, "\nSubject To");
-            for( i = 0; i < nodes; i++ )
+            for( i = 0; i < g_nNodes; i++ )
             {
                 fprintf(foutput, "\n soloUnColorNodo%d: x%d0", i, i);
 
-                for( int j = 1; j < qtyColorsUpperBound; j++ )
+                for( int j = 1; j < coloringUpperBound; j++ )
                     fprintf(foutput, " + x%d%d", i, j);
 
                 fprintf(foutput, " = 1");
@@ -396,9 +421,14 @@ void colToLp(const char* colFileName, const char* lpFileName, int qtyColorsLower
             fscanf(finput, "%d %d\n", &node1, &node2);
             node1--;
             node2--;
-            for(int j = 0; j < qtyColorsUpperBound; j++)
+            for(int j = 0; j < nColors; j++)
                 fprintf(foutput, "\n adyDeDistintoColorNodo%dNodo%dColor%d: x%d%d + x%d%d - w%d <= 0",
                           node1, node2, j, node1, j, node2, j, j);
+            // no olvidar que tambien hay q agregar las restricciones de los colores que ya estan fijos en 1
+            for(int j = nColors; j < coloringUpperBound; j++)
+                fprintf(foutput, "\n adyDeDistintoColorNodo%dNodo%dColor%d: x%d%d + x%d%d <= 1",
+                          node1, node2, j, node1, j, node2, j, j);
+
             break;
 
         default:
@@ -407,21 +437,17 @@ void colToLp(const char* colFileName, const char* lpFileName, int qtyColorsLower
     }
 
     fprintf(foutput, "\nBinary\n");
-    for(int j = 0; j < qtyColorsUpperBound; j++)
+    for(int j = 0; j < coloringUpperBound; j++)
         fprintf(foutput, " w%d\n", j);
 
-    for(int i = 0; i < nodes; i++)
-        for(int j = 0; j < qtyColorsUpperBound; j++)
+    for(int i = 0; i < g_nNodes; i++)
+        for(int j = 0; j < coloringUpperBound; j++)
             fprintf(foutput, " x%d%d\n", i, j);
 
     fprintf(foutput, "\nEnd");
 
     fclose(foutput);
     fclose(finput);
-}
-
-void InitializeCutInfo( CUTINFOptr cutinfo )
-{
 }
 
 int main (int argc, char *argv[]){
@@ -454,7 +480,7 @@ int main (int argc, char *argv[]){
     CPXsetdblparam(env,CPX_PARAM_CUTSFACTOR,0.0);         //Row multiplier factor for cuts
 
     //Parametros para salida por pantalla
-    CPXsetintparam (env, CPX_PARAM_SCRIND, CPX_OFF);      //para mostrar las iteraciones
+    CPXsetintparam (env, CPX_PARAM_SCRIND, CPX_ON);      //para mostrar las iteraciones
     CPXsetintparam (env, CPX_PARAM_MIPINTERVAL, 1);       //para el log
     CPXsetintparam (env, CPX_PARAM_MIPDISPLAY, 3);        //muestra las soluciones y los cortes
 
@@ -478,7 +504,7 @@ int main (int argc, char *argv[]){
     if( argv[1] != 0 )
         fileInput = argv[1];
     else
-        fileInput = "test3-70.col";
+        fileInput = "myciel4.col";
 
     //Heuristicas iniciales
     g_nHeuristicColorBounds = heuristicBounds(fileInput.c_str());
@@ -544,7 +570,10 @@ int main (int argc, char *argv[]){
             goto TERMINATE;
         }
 
-	    printf("\nValor objetivo: %lf\n", objval);
+        // al valor del objetivo hay que sumarle el lowerBound de las heuristicas
+        // de preprocesamiento, ya que le fijamos las variables de los colores
+        // correspondientes a los que van de lowerBound a upperBound
+	    printf("\Coloreo: %lf\n", objval + g_nHeuristicColorBounds.first);
 	    printf("Nodos: %d\n", nodos);
         printf("Tiempo: %lf\n", end-init);
 	    //printf("\nSolucion:\n");
