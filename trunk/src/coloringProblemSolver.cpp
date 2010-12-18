@@ -7,8 +7,9 @@ using namespace std;
 
 /********* Declaracion de constantes *********/
 
+#define EPSILON 0.000001
 #define BUFFERSIZE 256
-#define LOWER_BOUND_HEURISTIC_MAX_ITERATIONS 1
+#define LOWER_BOUND_HEURISTIC_MAX_ITERATIONS 3
 #define min(a, b) (a) < (b) ? (a) : (b)
 #define max(a, b) (a) > (b) ? (a) : (b)
 
@@ -23,6 +24,11 @@ struct cutinfo {
 };
 typedef struct cutinfo CUTINFO, *CUTINFOptr;
 
+enum SolvingParameters
+{
+    NO_PARAMETERS = 0,
+    PREPROCESSING_HEURISTICS = 1
+};
 /********* Declaracion de variables globales *********/
 double machineEps;
 vector< vector< bool > > g_vvbGraphTable;
@@ -30,6 +36,7 @@ vector< vector< Edge > > g_vvEGraphAdjList;
 pair< int, int > g_nHeuristicColorBounds;
 int g_nNodes;
 int g_nEdges;
+int nColorColumns;
 
 /********* Implementacion de Funciones *********/
 
@@ -40,7 +47,12 @@ typedef struct _columnValue {
 
 inline int comparePtrDouble (const void * a, const void * b)
 {
-    return ( (**(double**)a) - (**(double**)b) );
+    double nVal = (**(double**)b) - (**(double**)a);
+    if( nVal > EPSILON )
+        return 1;
+    if( nVal < EPSILON )
+        return -1;
+    return 0;
 }
 
 static int CPXPUBLIC cortes (CPXCENVptr env,
@@ -64,20 +76,101 @@ static int CPXPUBLIC cortes (CPXCENVptr env,
         return status;
     }
 
+    int nNonColorVariables = nColumns - nColorColumns;
+
     // corte por clique:
-    double** pValues = new double*[nColumns];
-    int nFractionalsLowerTo1 = 0;
-    for (int col = 0; col < nColumns; col++)
+    int nValuesLowerTo1 = 0;
+    for (int col = 0; col < nNonColorVariables; col++)
     {
-        if( x[col] < 1.0 )
-            nFractionalsLowerTo1++;
-        pValues[col] = &x[col];
+        if( x[col + nColorColumns] < 1.0 )
+            nValuesLowerTo1++;
     }
-    // solo para debuguear:
-    qsort(pValues, nColumns, sizeof(double*), comparePtrDouble);
+
+    double** pValues = new double*[nValuesLowerTo1];
+    int nAux = 0;
+    for (int col = 0; col < nNonColorVariables; col++)
+    {
+        if( x[col + nColorColumns] < 1.0 )
+        {
+            pValues[nAux] = &x[col + nColorColumns];
+            nAux++;
+        }
+    }
+    qsort(pValues, nValuesLowerTo1, sizeof(double*), comparePtrDouble);
 
     // para sacar el nodo correspondiente a ese valor se puede hacer
     // ((long)pValues[col] - (long)x) / sizeof(double)
+
+    // solo para debuguear, despues se eliminan estas dos lineas
+    ColumnValue xDebugOrdenado[92]; for(int i = 0; i < 92; i++) { xDebugOrdenado[i].nValue = *pValues[i]; xDebugOrdenado[i].nColumn = ((long)pValues[i] - (long)x) / sizeof(double); }
+    double xDebugOriginal[118]; for(int i = 0; i < 118; i++) { xDebugOriginal[i] = x[i]; }
+
+    int nColumnsPerGraphNode = g_nHeuristicColorBounds.second;
+
+    // iniciamos la busqueda de una clique
+    int nColumn = ((long)pValues[0] - (long)x) / sizeof(double);
+    // estas cuentas estan fuertemente respaldadas por el formato del .col generado
+    int nColor = (nColumn - nColorColumns) % nColumnsPerGraphNode;
+    double nColorValue = (nColor < nColorColumns) ? x[nColor] : 1;
+    double nColumnValueSum = 0;
+
+    vector<Node> vCliqueNodes;
+    vector<ColumnValue> vCliqueColumnValues;
+    // vamos a ir agregando de a un nodo por vez, verificando siempre que el nodo
+    // pertenezca a la clique y esté pintado del mismo color j, y que la sumatoria de los colores
+    // sea menor o igual a wj + EPSILON
+    for( int nIdx = 0; nIdx < nValuesLowerTo1 && nColumnValueSum <= nColorValue + EPSILON; nIdx++ )
+    {
+        int nCurrentColumn = ((long)pValues[nIdx] - (long)x) / sizeof(double);
+        int nCurrentColor = (nCurrentColumn - nColorColumns) % nColumnsPerGraphNode;
+        if( nCurrentColor != nColor )
+            continue;
+
+        Node nCurrentNode = (nCurrentColumn - nColorColumns) / nColumnsPerGraphNode;
+
+        bool bAddToClique = true;
+        size_t nCurrentCliqueSize = vCliqueNodes.size();
+        // verificamos que el nodo actual sea adyacente a todos los nodos de la clique
+        for( int i = 0; i < nCurrentCliqueSize && bAddToClique; i++ )
+            bAddToClique = g_vvbGraphTable[ nCurrentNode ][ vCliqueNodes[i] ];
+
+        if( bAddToClique )
+        {
+            // agregamos el nodo actual a la clique y actualizamos la sumatoria
+            vCliqueNodes.push_back( nCurrentNode );
+
+            ColumnValue colValNew;
+            colValNew.nColumn = nCurrentColumn;
+            colValNew.nValue = *pValues[nIdx];
+            vCliqueColumnValues.push_back(colValNew);
+
+            nColumnValueSum += *pValues[nIdx];
+        }
+    }
+
+    // si la sumatoria es mayor a el valor del color + EPSILON,
+    // agregar un corte por desigualdad clique
+    if( nColumnValueSum > nColorValue + EPSILON )
+    {
+        size_t nCurrentCliqueSize = vCliqueColumnValues.size();
+        int* cutInd = new int[ nCurrentCliqueSize ];
+        double* cutVal = new double[ nCurrentCliqueSize ];
+        for(int i = 0; i < nCurrentCliqueSize; i++)
+        {
+            cutInd[i] = vCliqueColumnValues[i].nColumn;
+            cutVal[i] = vCliqueColumnValues[i].nValue;
+        }
+
+        CPXcutcallbackadd(  env,
+                            cbdata,
+                            wherefrom,
+                            nCurrentCliqueSize,
+                            nColorValue,
+                            'L',
+                            cutInd,
+                            cutVal,
+                            0                   );
+    }
 
     *useraction_p = CPX_CALLBACK_SET;
     return 0;
@@ -335,15 +428,10 @@ int heuristicCliqueLowerBound( int iterations )
     return maximalCliqueNodes;
 }
 
-pair<int, int> heuristicBounds(const char* colFileName)
+void heuristicBounds()
 {
-    buildGraphFromCol(colFileName);
-    pair<int, int> res( 0, g_nNodes );
-
-    res.first = heuristicCliqueLowerBound(LOWER_BOUND_HEURISTIC_MAX_ITERATIONS);
-    res.second = min(heuristicBFSUpperBound(), heuristicSequentialUpperBound());
-
-    return res;
+    g_nHeuristicColorBounds.first = heuristicCliqueLowerBound(LOWER_BOUND_HEURISTIC_MAX_ITERATIONS);
+    g_nHeuristicColorBounds.second = min(heuristicBFSUpperBound(), heuristicSequentialUpperBound());
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -371,7 +459,7 @@ void colToLp(const char* colFileName, const char* lpFileName, int coloringLowerB
     char* format = new char[BUFFERSIZE];
     g_nNodes = 0;
     g_nEdges = 0;
-    int nColors = coloringUpperBound - coloringLowerBound;
+    nColorColumns = coloringUpperBound - coloringLowerBound;
 
     while( (c = getc(finput)) != EOF )
     {
@@ -399,7 +487,7 @@ void colToLp(const char* colFileName, const char* lpFileName, int coloringLowerB
             fprintf(foutput, "Minimize\n obj:");
             if( g_nNodes > 0 )
                 fprintf(foutput, " w0");
-            for( i = 1; i < nColors; i++ )
+            for( i = 1; i < nColorColumns; i++ )
                 fprintf(foutput, " + w%d",i);
 
             fprintf(foutput, "\nSubject To");
@@ -421,11 +509,11 @@ void colToLp(const char* colFileName, const char* lpFileName, int coloringLowerB
             fscanf(finput, "%d %d\n", &node1, &node2);
             node1--;
             node2--;
-            for(int j = 0; j < nColors; j++)
+            for(int j = 0; j < nColorColumns; j++)
                 fprintf(foutput, "\n adyDeDistintoColorNodo%dNodo%dColor%d: x%d%d + x%d%d - w%d <= 0",
                           node1, node2, j, node1, j, node2, j, j);
             // no olvidar que tambien hay q agregar las restricciones de los colores que ya estan fijos en 1
-            for(int j = nColors; j < coloringUpperBound; j++)
+            for(int j = nColorColumns; j < coloringUpperBound; j++)
                 fprintf(foutput, "\n adyDeDistintoColorNodo%dNodo%dColor%d: x%d%d + x%d%d <= 1",
                           node1, node2, j, node1, j, node2, j, j);
 
@@ -437,7 +525,7 @@ void colToLp(const char* colFileName, const char* lpFileName, int coloringLowerB
     }
 
     fprintf(foutput, "\nBinary\n");
-    for(int j = 0; j < coloringUpperBound; j++)
+    for(int j = 0; j < nColorColumns; j++)
         fprintf(foutput, " w%d\n", j);
 
     for(int i = 0; i < g_nNodes; i++)
@@ -450,17 +538,16 @@ void colToLp(const char* colFileName, const char* lpFileName, int coloringLowerB
     fclose(finput);
 }
 
-int main (int argc, char *argv[]){
+int solveProblem(string sFileName, SolvingParameters parameters = NO_PARAMETERS)
+{
     int status = 0;
     double init,end;
-    string fileInput;
     size_t extensionOffset;
     int numcols = 0;
 
     CPXENVptr env = NULL;
     CPXLPptr  lp = NULL;
     machineEps = 0.000001;
-    g_nHeuristicColorBounds = pair<int, int>( -1, -1 );
 
     //Inicializamos el entorno
     env = CPXopenCPLEX (&status);
@@ -480,7 +567,7 @@ int main (int argc, char *argv[]){
     CPXsetdblparam(env,CPX_PARAM_CUTSFACTOR,0.0);         //Row multiplier factor for cuts
 
     //Parametros para salida por pantalla
-    CPXsetintparam (env, CPX_PARAM_SCRIND, CPX_OFF);      //para mostrar las iteraciones
+    CPXsetintparam (env, CPX_PARAM_SCRIND, CPX_ON);      //para mostrar las iteraciones
     CPXsetintparam (env, CPX_PARAM_MIPINTERVAL, 1);       //para el log
     CPXsetintparam (env, CPX_PARAM_MIPDISPLAY, 3);        //muestra las soluciones y los cortes
 
@@ -503,28 +590,31 @@ int main (int argc, char *argv[]){
         goto TERMINATE;
     }
 
-    if( argv[1] != 0 )
-        fileInput = argv[1];
-    else
-        fileInput = "myciel4.col";
+    // Heuristicas iniciales
+    buildGraphFromCol(sFileName.c_str());
+    g_nHeuristicColorBounds = pair<int, int>( 0, g_nNodes );
+    if (parameters & PREPROCESSING_HEURISTICS)
+    {
+        heuristicBounds();
+        printf( "Heuristicas: cota inf = %i, cota sup = %i \n",
+                g_nHeuristicColorBounds.first,
+                g_nHeuristicColorBounds.second );
+    }
 
-    //Heuristicas iniciales
-    g_nHeuristicColorBounds = heuristicBounds(fileInput.c_str());
-
-    printf("Heuristicas: cota inf = %i, cota sup = %i \n", g_nHeuristicColorBounds.first, g_nHeuristicColorBounds.second);
+    nColorColumns = g_nHeuristicColorBounds.second - g_nHeuristicColorBounds.first;
 
     //si la extension no es .lp suponemos que es un archivo con formato .col
-    extensionOffset = fileInput.find_last_of(".");
-    if( fileInput.substr(extensionOffset, fileInput.size()).compare(".lp") != 0 )
+    extensionOffset = sFileName.find_last_of(".");
+    if( sFileName.substr(extensionOffset, sFileName.size()).compare(".lp") != 0 )
     {
-        string fileOutput = fileInput.substr(0, extensionOffset);
+        string fileOutput = sFileName.substr(0, extensionOffset);
         fileOutput += ".lp";
-        colToLp(fileInput.c_str(), fileOutput.c_str(), g_nHeuristicColorBounds.first, g_nHeuristicColorBounds.second);
-        fileInput = fileOutput;
+        colToLp(sFileName.c_str(), fileOutput.c_str(), g_nHeuristicColorBounds.first, g_nHeuristicColorBounds.second);
+        sFileName = fileOutput;
     }
 
     //leemos el problema
-    status = CPXreadcopyprob (env, lp, fileInput.c_str(), NULL);
+    status = CPXreadcopyprob (env, lp, sFileName.c_str(), NULL);
     if ( status )
     {
         printf("Problemas al leer el problema - %d\n", status);
@@ -536,7 +626,7 @@ int main (int argc, char *argv[]){
     cutinfo.lp = lp;
     cutinfo.nColumns = numcols;
 
-    //asignamos la heuristica de separacion al problema
+    // asignamos la heuristica de separacion al problema
     status = CPXsetcutcallbackfunc (env, cortes, &cutinfo);
     if ( status )
     {
@@ -596,4 +686,15 @@ int main (int argc, char *argv[]){
     }
 
     return 0;
+}
+
+int main(int argc, char *argv[])
+{
+    string fileInput;
+    if( argv[1] != 0 )
+        fileInput = argv[1];
+    else
+        fileInput = "myciel4.col";
+
+    return solveProblem(fileInput, PREPROCESSING_HEURISTICS);
 }
