@@ -6,7 +6,8 @@ En este caso en particular, se tomaron parámetros que se utilizan en el método d
 
 Los parámetros elegidos son los siguientes:
 
-\begin{itemize}
+\begin{enumerate}
+
 \item \textbf{CPX\_PARAM\_BRDIR:} Este parámetro sirve para modificar la dirección en la cual se hará en branching en cada paso. Los posibles valores para el mismo son los siguientes:
    \begin{itemize}
    \item CPX\_BRDIR\_UP, que indica que el branching siempre debe hacerse por la parte superior.
@@ -25,10 +26,236 @@ Los parámetros elegidos son los siguientes:
     \item CPX\_VARSEL\_PSEUDOREDUCED, selecciona la variable basado en costos.
     \end{itemize}
 
+\item \textbf{CPX\_PARAM\_NODESEL}, estrategia de selección de cada nodo, para el arbol de backtracking de branch and bound.
+  	\begin{itemize}
+   	\item CPX\_NODESEL\_DFS: Selecciona el seguiente nodo de acuerdo al recorrido de DFS.
+   	\item CPX\_NODESEL\_BESTBOUND: Selecciona el siguiente nodo que tiene mejor función objetivo para el problema actual relajado.
+   	\item CPX\_NODESEL\_BESTEST: Selecciona el nodo con la mejor estimación del valor objetivo entero, que puede ser obtenido una vez que todos los valores enteros inviables, hayan sido removidos.
+   	\end{itemize}
+
 \item \textbf{CPX\_PARAM\_STRONGITLIM:} Indica el límite de iteraciones a realizar en cada una de las variables candidatas para realizar el branching. Los valores que puede tomar son: 0, automatico o un número positivo, que indica las iteraciones fijas a realizar.
 
 \item \textbf{CPX\_PARAM\_ZEROHALFCUTS:} Aquí se indica si se harán o no cortes de tipo parte entera hacia abajo para los valores de algunas de las restricciones. Los posibles valores son: -1, desactivado, 0 automatico, 1 normal y 2 agresivo.
-\end{itemize}
+\end{enumerate}
 
 \subsection{Pruebas realizadas}
+
+En lo que sigue de la sección actual, se mostrarán los resultados de varias rondas de tests,las cuales involucran la combinación de diferenctes parametros de $Cplex$. Además, se irá contando cuales fueron los problemas encontrados en cada una de las rondas y como se fueron seleccionando los mejores valores de los parametros, para realizar las pruebas finales.
+
+La configuración global de $Cplex$, además de los parametros descriptos, se modifico, de manera de analizar solo el comportamiento del método branch and bound. Para esto, se desabilitaron algunas carácteristicas que vienen configuradas por defecto. Las heuristicas de preproceso de la información y de reducción variables fueron deshabilitadas, para esto se setearon los parametros $CPX\_PARAM\_REDUCE$ y $CPX\_PARAM\_MIPCBREDLP$ en $off$ y el parametro $CPX\_PARAM\_PRELINEAR$ en cero.
+
+Además de esta configuración, se desactivaron todos los métodos que realizan cortes en el problema. Para esto entonces, se setearon los parametros $CPX\_PARAM\_CUTPASS$ en -1 y $CPX\_PARAM\_CUTSFACTOR$ en cero.
+
+Es cierto que con lo anteriormente realizado, la performace, a la hora de resolver los problemas va a disminuir, pero el fin de hacer esto, es para evaluar, en lo posible el comportamiento lo mas aislado posible del metodo branch and bound.
+
+Como a la hora de realizar los tests y ver su eficacia en cuanto a tiempo consumido antes de alcanzar la solución optima, se deshabilitó (con el fin de optimizar los cálculos) una opción de $Cplex$ que muestra los valores actuales en cada una de las iteraciones.
+
+\subsubsection{Ronda Número 1}
+
+La primer ronda, consistió en realizar tests combinando los parámetros 1, 2, 5 y 6, con lo que se obtuvo veinti cuatro tipos distintos de tests. Los mismos recibían como parámetros grafos de 3 a 13 nodos, con una densidad de $70\%$. El motivo por el cual, el tamaño de los grafos de prueba es relativamente pequeño, es por que, con grafos de 14 o más nodos, la PC en la que se realizaban todas las pruebas, no podía resolver dichos problemas, dado que la cantidad de memoria de la que disponía no alcanzaba, y por este motivo $Cplex$, devolvía un error que informaba dicho problema.
+
+La pc en la que se realizaron todas las pruebas es un $Athlon$ $64$ $3000+$ con $1.80Ghz$ de velocidad de procesador, un solo núcleo y con $1GB$ de ram $DDR2$ de $800Mhz$.
+
+
+Como se comentó anteriormente, se crearon 24 (venti cuatro) tipos de tests distintos, los cuales se corresponden con alguna combinación en los valores de los parámetros mencionados. A continuación se hará una descripción de cada uno de los tipos de tests:
+
+\begin{enumerate}
+
+\item Tipo1:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_DOWN\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 1\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ -1\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_MININFEAS *\\
+
+\item Tipo2:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_DOWN\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 1\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 1 *\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_MININFEAS *\\
+
+\item Tipo3:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_DOWN\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 1\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 2 *\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_MININFEAS *\\
+
+\item Tipo4:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_DOWN\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 2 *\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 1 *\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_MININFEAS *\\
+
+\item Tipo5:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_DOWN\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 5 *\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 1 *\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_MININFEAS *\\
+
+\item Tipo6:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_DOWN\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_ON *\\
+CPX\_PARAM\_STRONGITLIM $\to$ 2  *\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 1 *\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_MININFEAS *\\
+
+\item Tipo7:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_UP *\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 1\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ -1\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_MININFEAS *\\
+
+\item Tipo8:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_UP *\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 1\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 1 *\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_MININFEAS *\\
+
+\item Tipo9:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_UP *\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 1\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 2 *\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_MININFEAS *\\
+
+\item Tipo10:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_UP *\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 2 *\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 1 *\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_MININFEAS *\\
+
+\item Tipo11:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_UP *\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 5 *\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 1 *\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_MININFEAS *\\
+
+\item Tipo12:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_UP *\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_ON *\\
+CPX\_PARAM\_STRONGITLIM $\to$ 2 *\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 1 *\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_MININFEAS *\\
+
+\item Tipo13:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_DOWN\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 1\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ -1\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_MAXINFEAS *\\
+
+\item Tipo14:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_DOWN\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 1\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 1 *\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_MAXINFEAS *\\
+
+\item Tipo15:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_DOWN\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 1\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 2 *\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_MAXINFEAS *\\
+
+\item Tipo16:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_DOWN\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 2 *\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 1 *\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_MAXINFEAS *\\
+
+\item Tipo17:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_DOWN\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 5 *\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 1 *\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_MAXINFEAS *\\
+
+\item Tipo18:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_DOWN\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_ON *\\
+CPX\_PARAM\_STRONGITLIM $\to$ 2 *\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 1 *normal\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_MAXINFEAS *\\
+
+\item Tipo19:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_UP *\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 1\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ -1\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_MININFEAS *\\
+
+\item Tipo20:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_UP *\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 1\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 1   *normal\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_MAXINFEAS *\\
+
+\item Tipo21:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_UP *\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 1\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 2 *\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_MAXINFEAS *\\
+
+\item Tipo22:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_UP *\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 2 *\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 1 *normal\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_MAXINFEAS *\\
+
+\item Tipo23:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_UP *\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 5 *\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 1 *normal\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_MAXINFEAS *\\
+
+\item Tipo24:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_UP *\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_ON *\\
+CPX\_PARAM\_STRONGITLIM $\to$ 2 *\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 1 *normal\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_MAXINFEAS *\\
+
+\end{enumerate}
+
+A continuación se mostrarán los gráficos de tiempo, para cada uno de los tipos de tests, y para cada uno de los grafos de 3 a 13 nodos, con $70\%$ de densidad. El primer grafico, si bien no deja que se observe la información de cada uno de los tests claramente, sirve para ver como es que aumenta el tiempo de procesamiento a medida que aumenta la canridad de nodos en el grafo. Como se puede observar en cada valor del eje horizontal X, si bien cada uno de los valores de cada grupo de resultados varía entre los demás del mismo grupo, podemos observar que el patron es similar, el aumento del tiempo de procesamiento se torna exponencial a medida que aumenta la cantidad de nodos del grafo:
+
+%%%%%%%%grafico resultados 1: general de 3 a 13 nodos.
 
