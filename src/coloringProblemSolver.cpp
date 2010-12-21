@@ -27,7 +27,7 @@ typedef struct cutinfo CUTINFO, *CUTINFOptr;
 enum SolvingParameters
 {
     NO_PARAMETERS = 0,
-    PREPROCESSING_HEURISTICS = 1
+    CHROMATIC_NUMBER_BOUND_HEURISTICS = 1,
 };
 /********* Declaracion de variables globales *********/
 double machineEps;
@@ -69,7 +69,7 @@ static int CPXPUBLIC cortes (CPXCENVptr env,
 
     *useraction_p = CPX_CALLBACK_DEFAULT;
 
-    status = CPXgetcallbacknodex (env, cbdata, wherefrom, x, 0, nColumns - 1);
+    status = CPXgetcallbacknodex(env, cbdata, wherefrom, x, 0, nColumns - 1);
     if ( status )
     {
         printf("Failed to get node solution.\n");
@@ -102,8 +102,10 @@ static int CPXPUBLIC cortes (CPXCENVptr env,
     // ((long)pValues[col] - (long)x) / sizeof(double)
 
     // solo para debuguear, despues se eliminan estas dos lineas
+/*
     ColumnValue xDebugOrdenado[12]; for(int i = 0; i < 12; i++) { xDebugOrdenado[i].nValue = *pValues[i]; xDebugOrdenado[i].nColumn = ((long)pValues[i] - (long)x) / sizeof(double); }
     double xDebugOriginal[20]; for(int i = 0; i < 20; i++) { xDebugOriginal[i] = x[i]; }
+*/
 
     int nColumnsPerGraphNode = g_nHeuristicColorBounds.second;
 
@@ -169,8 +171,13 @@ static int CPXPUBLIC cortes (CPXCENVptr env,
             printf ("Failed to add cut.\n");
             return status;
         }
-
+      
+        delete [] cutInd;
+        delete [] cutVal;
     }
+
+    delete [] pValues;
+    delete [] x;
 
     *useraction_p = CPX_CALLBACK_SET;
     return status;
@@ -261,12 +268,8 @@ int minAvailableColor( Node node, vector< int > coloring, int qtyColorsUsed )
             vbAdjColorUsed[adjColor - 1] = true;
     }
 
-    int minColor = 0;
-    if( vbAdjColorUsed.size() > 0 )
-    {
-        while (vbAdjColorUsed[ minColor ])
-            minColor++;
-    }
+    int minColor;
+    for ( minColor = 0; minColor < vbAdjColorUsed.size() && vbAdjColorUsed[ minColor ]; minColor++ ){}
 
     return minColor + 1;
 }
@@ -561,10 +564,14 @@ int solveProblem(string sFileName, SolvingParameters parameters = NO_PARAMETERS)
     CPXsetintparam (env, CPX_PARAM_REDUCE,CPX_OFF);
     CPXsetintparam (env, CPX_PARAM_PRELINEAR, 0);
     CPXsetintparam (env, CPX_PARAM_MIPCBREDLP, CPX_OFF);
-
+    
     //parametros para que no haga cortes
-    CPXsetintparam(env,CPX_PARAM_CUTPASS,-1);             //Number of cutting plane passes
-    CPXsetdblparam(env,CPX_PARAM_CUTSFACTOR,0.0);         //Row multiplier factor for cuts
+
+/*
+    CPXsetintparam(env,CPX_PARAM_CUTPASS,10);             //Number of cutting plane passes
+    CPXsetdblparam(env,CPX_PARAM_CUTSFACTOR,6.0);         //Row multiplier factor for cuts
+*/
+
 
     //Parametros para salida por pantalla
     CPXsetintparam (env, CPX_PARAM_SCRIND, CPX_ON);      //para mostrar las iteraciones
@@ -572,12 +579,14 @@ int solveProblem(string sFileName, SolvingParameters parameters = NO_PARAMETERS)
     CPXsetintparam (env, CPX_PARAM_MIPDISPLAY, 3);        //muestra las soluciones y los cortes
 
     ///Parametros para elegir las estrategias de branching
+/*
     CPXsetintparam (env, CPX_PARAM_BRDIR, CPX_BRDIR_AUTO);            //CPX_BRDIR_DOWN o CPX_BRDIR_AUTO  o CPX_BRDIR_UP
     CPXsetintparam (env, CPX_PARAM_LBHEUR, CPX_ON);                 //local branching heuristic OFF(default)
     CPXsetintparam (env, CPX_PARAM_STRONGITLIM, 5);                 //MIP strong branching iterations limit 0(auto) o positivo
     CPXsetintparam (env, CPX_PARAM_ZEROHALFCUTS, 1);                // MIP zero-half cuts -1 0(auto) 1 2(agresivo)
     CPXsetintparam (env, CPX_PARAM_VARSEL, CPX_VARSEL_DEFAULT);     //variable selection, menos inviable, mas inviable
     CPXsetintparam (env, CPX_PARAM_NODESEL, CPX_NODESEL_BESTEST); //node selection strategy, BESTBOUND(default), DFS, BESTEST
+*/
 
     CUTINFO cutinfo;
     cutinfo.nColumns = 0;
@@ -591,9 +600,10 @@ int solveProblem(string sFileName, SolvingParameters parameters = NO_PARAMETERS)
     }
 
     // Heuristicas iniciales
+    CPXgettime(env,&init);
     buildGraphFromCol(sFileName.c_str());
     g_nHeuristicColorBounds = pair<int, int>( 0, g_nNodes );
-    if (parameters & PREPROCESSING_HEURISTICS)
+    if (parameters & CHROMATIC_NUMBER_BOUND_HEURISTICS)
     {
         heuristicBounds();
         printf( "Heuristicas: cota inf = %i, cota sup = %i \n",
@@ -627,14 +637,13 @@ int solveProblem(string sFileName, SolvingParameters parameters = NO_PARAMETERS)
     cutinfo.nColumns = numcols;
 
     // asignamos la heuristica de separacion al problema
-    status = CPXsetcutcallbackfunc (env, cortes, &cutinfo);
+//    status = CPXsetcutcallbackfunc (env, cortes, &cutinfo);
     if ( status )
     {
         printf("Problemas al setear rutina de separacion - %d.\n", status);
         goto TERMINATE;
     }
 
-    CPXgettime(env,&init);
     status = CPXmipopt (env, lp);
     CPXgettime(env,&end);
 
@@ -696,5 +705,5 @@ int main(int argc, char *argv[])
     else
         fileInput = "test25-70.col";
 
-    return solveProblem(fileInput, PREPROCESSING_HEURISTICS);
+    return solveProblem(fileInput, NO_PARAMETERS);
 }
