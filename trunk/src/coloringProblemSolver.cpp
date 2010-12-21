@@ -102,8 +102,8 @@ static int CPXPUBLIC cortes (CPXCENVptr env,
     // ((long)pValues[col] - (long)x) / sizeof(double)
 
     // solo para debuguear, despues se eliminan estas dos lineas
-    ColumnValue xDebugOrdenado[92]; for(int i = 0; i < 92; i++) { xDebugOrdenado[i].nValue = *pValues[i]; xDebugOrdenado[i].nColumn = ((long)pValues[i] - (long)x) / sizeof(double); }
-    double xDebugOriginal[118]; for(int i = 0; i < 118; i++) { xDebugOriginal[i] = x[i]; }
+    ColumnValue xDebugOrdenado[12]; for(int i = 0; i < 12; i++) { xDebugOrdenado[i].nValue = *pValues[i]; xDebugOrdenado[i].nColumn = ((long)pValues[i] - (long)x) / sizeof(double); }
+    double xDebugOriginal[20]; for(int i = 0; i < 20; i++) { xDebugOriginal[i] = x[i]; }
 
     int nColumnsPerGraphNode = g_nHeuristicColorBounds.second;
 
@@ -116,6 +116,7 @@ static int CPXPUBLIC cortes (CPXCENVptr env,
 
     vector<Node> vCliqueNodes;
     vector<ColumnValue> vCliqueColumnValues;
+    size_t nCurrentCliqueSize = 0;
     // vamos a ir agregando de a un nodo por vez, verificando siempre que el nodo
     // pertenezca a la clique y esté pintado del mismo color j, y que la sumatoria de los colores
     // sea menor o igual a wj + EPSILON
@@ -129,7 +130,6 @@ static int CPXPUBLIC cortes (CPXCENVptr env,
         Node nCurrentNode = (nCurrentColumn - nColorColumns) / nColumnsPerGraphNode;
 
         bool bAddToClique = true;
-        size_t nCurrentCliqueSize = vCliqueNodes.size();
         // verificamos que el nodo actual sea adyacente a todos los nodos de la clique
         for( int i = 0; i < nCurrentCliqueSize && bAddToClique; i++ )
             bAddToClique = g_vvbGraphTable[ nCurrentNode ][ vCliqueNodes[i] ];
@@ -141,10 +141,11 @@ static int CPXPUBLIC cortes (CPXCENVptr env,
 
             ColumnValue colValNew;
             colValNew.nColumn = nCurrentColumn;
-            colValNew.nValue = *pValues[nIdx];
+            colValNew.nValue = x[nCurrentColumn];
             vCliqueColumnValues.push_back(colValNew);
 
-            nColumnValueSum += *pValues[nIdx];
+            nColumnValueSum += colValNew.nValue;
+            nCurrentCliqueSize++;
         }
     }
 
@@ -152,7 +153,6 @@ static int CPXPUBLIC cortes (CPXCENVptr env,
     // agregar un corte por desigualdad clique
     if( nColumnValueSum > nColorValue + EPSILON )
     {
-        size_t nCurrentCliqueSize = vCliqueColumnValues.size();
         int* cutInd = new int[ nCurrentCliqueSize ];
         double* cutVal = new double[ nCurrentCliqueSize ];
         for(int i = 0; i < nCurrentCliqueSize; i++)
@@ -161,19 +161,19 @@ static int CPXPUBLIC cortes (CPXCENVptr env,
             cutVal[i] = vCliqueColumnValues[i].nValue;
         }
 
-        CPXcutcallbackadd(  env,
-                            cbdata,
-                            wherefrom,
-                            nCurrentCliqueSize,
-                            nColorValue,
-                            'L',
-                            cutInd,
-                            cutVal,
-                            0                   );
+        status = CPXcutcallbackadd(  env, cbdata, wherefrom,
+                                     nCurrentCliqueSize,
+                                     nColorValue, 'L',
+                                     cutInd, cutVal, 1 );
+        if ( status ) {
+            printf ("Failed to add cut.\n");
+            return status;
+        }
+
     }
 
     *useraction_p = CPX_CALLBACK_SET;
-    return 0;
+    return status;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -485,7 +485,7 @@ void colToLp(const char* colFileName, const char* lpFileName, int coloringLowerB
                 coloringUpperBound = g_nNodes;
             // begin building output file
             fprintf(foutput, "Minimize\n obj:");
-            if( g_nNodes > 0 )
+            if( nColorColumns > 0 )
                 fprintf(foutput, " w0");
             for( i = 1; i < nColorColumns; i++ )
                 fprintf(foutput, " + w%d",i);
@@ -532,7 +532,7 @@ void colToLp(const char* colFileName, const char* lpFileName, int coloringLowerB
         for(int j = 0; j < coloringUpperBound; j++)
             fprintf(foutput, " x%d%d\n", i, j);
 
-    fprintf(foutput, "\nEnd");
+    fprintf(foutput, "End");
 
     fclose(foutput);
     fclose(finput);
@@ -694,7 +694,7 @@ int main(int argc, char *argv[])
     if( argv[1] != 0 )
         fileInput = argv[1];
     else
-        fileInput = "myciel4.col";
+        fileInput = "test25-70.col";
 
     return solveProblem(fileInput, PREPROCESSING_HEURISTICS);
 }
