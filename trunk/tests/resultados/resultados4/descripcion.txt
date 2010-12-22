@@ -1,0 +1,1 @@
+Resultados de tests con grafos de hasta 50 nodos.Con heuristicas iniciales, ahora se agrega la combinacion con el parametro CPX_PARAM_NODESEL, comparando con DFS, BESTBOUND y BESTEST, combinado con CPX_PARAM_LBHEUR en ON y OFF
