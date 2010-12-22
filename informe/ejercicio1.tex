@@ -22,7 +22,7 @@ Los parámetros elegidos son los siguientes:
     \item CPX\_VARSEL\_MININFEAS, que realiza el branch con la variable con inviabilidad mínima (es decir, la variable fraccionaria mas cercana a algún valor entero).
     \item CPX\_VARSEL\_MAXINFEAS, que realiza el braching con la variable mas inviable(es decir la mas lejana a un valor entero)
     \item CPX\_VARSEL\_PSEUDO, la variable es elegida a través de pseudo costos.
-    \item CPX\_VARSEL\_PSEUDO, elije la variable a través de la resolución de diferentes sub problemas que permiten saber cuan prometedora es la elección de dicha variable.
+    \item CPX\_VARSEL\_STRONG, elije la variable a través de la resolución de diferentes sub problemas que permiten saber cuan prometedora es la elección de dicha variable.
     \item CPX\_VARSEL\_PSEUDOREDUCED, selecciona la variable basado en costos.
     \end{itemize}
 
@@ -33,31 +33,31 @@ Los parámetros elegidos son los siguientes:
    	\item CPX\_NODESEL\_BESTEST: Selecciona el nodo con la mejor estimación del valor objetivo entero, que puede ser obtenido una vez que todos los valores enteros inviables, hayan sido removidos.
    	\end{itemize}
 
-\item \textbf{CPX\_PARAM\_STRONGITLIM:} Indica el límite de iteraciones a realizar en cada una de las variables candidatas para realizar el branching. Los valores que puede tomar son: 0, automatico o un número positivo, que indica las iteraciones fijas a realizar.
+\item \textbf{CPX\_PARAM\_STRONGITLIM:} Indica el límite de iteraciones a realizar en cada una de las variables candidatas para realizar el branching. Los valores que puede tomar son: 0, automático o un número positivo, que indica las iteraciones fijas a realizar.
 
-\item \textbf{CPX\_PARAM\_ZEROHALFCUTS:} Aquí se indica si se harán o no cortes de tipo parte entera hacia abajo para los valores de algunas de las restricciones. Los posibles valores son: -1, desactivado, 0 automatico, 1 normal y 2 agresivo.
+\item \textbf{CPX\_PARAM\_ZEROHALFCUTS:} Aquí se indica si se harán o no cortes de tipo parte entera hacia abajo para los valores de algunas de las restricciones. Los posibles valores son: -1, desactivado, 0 automático, 1 normal y 2 agresivo.
 \end{enumerate}
 
 \subsection{Pruebas realizadas}
 
-En lo que sigue de la sección actual, se mostrarán los resultados de varias rondas de tests,las cuales involucran la combinación de diferenctes parametros de $Cplex$. Además, se irá contando cuales fueron los problemas encontrados en cada una de las rondas y como se fueron seleccionando los mejores valores de los parametros, para realizar las pruebas finales.
+En lo que sigue de la sección actual, se mostrarán los resultados de varias rondas de tests,las cuales involucran la combinación de diferentes parámetros de $Cplex$. Además, se irá contando cuales fueron los problemas encontrados en cada una de las rondas y como se fueron seleccionando los mejores valores de los parámetros, para realizar las pruebas finales.
 
-La configuración global de $Cplex$, además de los parametros descriptos, se modifico, de manera de analizar solo el comportamiento del método branch and bound. Para esto, se desabilitaron algunas carácteristicas que vienen configuradas por defecto. Las heuristicas de preproceso de la información y de reducción variables fueron deshabilitadas, para esto se setearon los parametros $CPX\_PARAM\_REDUCE$ y $CPX\_PARAM\_MIPCBREDLP$ en $off$ y el parametro $CPX\_PARAM\_PRELINEAR$ en cero.
+La configuración global de $Cplex$, además de los parámetros descriptos, se modifico, de manera de analizar solo el comportamiento del método branch and bound. Para esto, se deshabilitaron algunas características que vienen configuradas por defecto. Las heuristicas de preproceso de la información y de reducción variables fueron deshabilitadas, para esto se setearon los parámetros $CPX\_PARAM\_REDUCE$ y $CPX\_PARAM\_MIPCBREDLP$ en $off$ y el parámetro $CPX\_PARAM\_PRELINEAR$ en cero.
 
-Además de esta configuración, se desactivaron todos los métodos que realizan cortes en el problema. Para esto entonces, se setearon los parametros $CPX\_PARAM\_CUTPASS$ en -1 y $CPX\_PARAM\_CUTSFACTOR$ en cero.
+Además de esta configuración, se desactivaron todos los métodos que realizan cortes en el problema. Para esto entonces, se setearon los parámetros $CPX\_PARAM\_CUTPASS$ en -1 y $CPX\_PARAM\_CUTSFACTOR$ en cero.
 
-Es cierto que con lo anteriormente realizado, la performace, a la hora de resolver los problemas va a disminuir, pero el fin de hacer esto, es para evaluar, en lo posible el comportamiento lo mas aislado posible del metodo branch and bound.
+Es cierto que con lo anteriormente realizado, la performace, a la hora de resolver los problemas va a disminuir, pero el fin de hacer esto, es para evaluar, en lo posible el comportamiento lo mas aislado posible del método branch and bound.
 
 Como a la hora de realizar los tests y ver su eficacia en cuanto a tiempo consumido antes de alcanzar la solución optima, se deshabilitó (con el fin de optimizar los cálculos) una opción de $Cplex$ que muestra los valores actuales en cada una de las iteraciones.
 
 \subsubsection{Ronda Número 1}
 
-La primer ronda, consistió en realizar tests combinando los parámetros 1, 2, 5 y 6, con lo que se obtuvo veinti cuatro tipos distintos de tests. Los mismos recibían como parámetros grafos de 3 a 13 nodos, con una densidad de $70\%$. El motivo por el cual, el tamaño de los grafos de prueba es relativamente pequeño, es por que, con grafos de 14 o más nodos, la PC en la que se realizaban todas las pruebas, no podía resolver dichos problemas, dado que la cantidad de memoria de la que disponía no alcanzaba, y por este motivo $Cplex$, devolvía un error que informaba dicho problema.
+La primer ronda, consistió en realizar tests combinando los parámetros 1, 2, 5 y 6, con lo que se obtuvo veinticuatro tipos distintos de tests. Los mismos recibían como parámetros grafos de 3 a 13 nodos, con una densidad de $70\%$. El motivo por el cual, el tamaño de los grafos de prueba es relativamente pequeño, es por que, con grafos de 14 o más nodos, la PC en la que se realizaban todas las pruebas, no podía resolver dichos problemas, dado que la cantidad de memoria de la que disponía no alcanzaba, y por este motivo $Cplex$, devolvía un error que informaba dicho problema.
 
-La pc en la que se realizaron todas las pruebas es un $Athlon$ $64$ $3000+$ con $1.80Ghz$ de velocidad de procesador, un solo núcleo y con $1GB$ de ram $DDR2$ de $800Mhz$.
+La pc en la que se realizaron todas las pruebas es un $Athlon$ $64$ $3000+$ con $1.80Ghz$ de velocidad de procesador, un solo núcleo y con $1GB$ de memoria Ram $DDR2$ de $800Mhz$.
 
 
-Como se comentó anteriormente, se crearon 24 (venti cuatro) tipos de tests distintos, los cuales se corresponden con alguna combinación en los valores de los parámetros mencionados. A continuación se hará una descripción de cada uno de los tipos de tests:
+Como se comentó anteriormente, se crearon 24 (venticuatro) tipos de tests distintos, los cuales se corresponden con alguna combinación en los valores de los parámetros mencionados. A continuación se hará una descripción de cada uno de los tipos de tests:
 
 \begin{enumerate}
 
@@ -263,3 +263,167 @@ A continuación se mostrarán los gráficos de tiempo, para cada uno de los tipos d
 \caption{Vista de la complejidad exponencial}
 \end{figure}
 
+Como se puede observar, además de que los tiempos se tornan exponenciales, también resultan ser muy altos para este problema. Si se tiene en cuenta que los grafos que se usaron en los tests, no son muy grandes. Como se puede observar en la figura anterior, para un grafo de 13 nodos, con 70\% de densidad, los tests estan tardando entre 1200 y 3000 segundos aproximadamente (es decir entre 20 y 50 minutos) en resolver el problema de coloreo para dicho grafo en particular. Por esta razón se llegó a la conclusión de que es necesario realizar algún cambio para disminuir los tiempos de respuesta.
+
+Luego de algunas pruebas aisladas, se pudo observar que uno de los factores que hacían que los tiempos sean tan altos, era el método para seleccionar la variable para realizar el branching.
+
+El control de dicha metodología se setea mediante el parámetro de configuración $CPX\_PARAM\_VARSEL$ y las pruebas realizadas tuvieron solo dos posibles valores en todos los test descriptos anteriormente. Uno selecciona la variable con la mínima infactibilidad y realiza el branching con dicha variable, y el otro selecciona la variable, con la mayor factibilidad. En las pruebas aisladas se probó con la selección automática de las variables en cada paso, es decir, dejando que $Cplex$ eligiera que variable convenía, de acuerdo a su metodología, para realizar el branching y se llegó a mejores resultados.
+
+En esto entonces se basan los tests realizados por la ronda número dos, que se explicarán en la siguiente sección.
+
+
+
+\subsubsection{Ronda Número 2}
+
+Como se mencionó en la sección anterior, en esta ronda se realizaron tests seteando el parámetro $CPX\_PARAM\_VARSEL$ en automático, de forma que $Cplex$ seleccionara la variable que mejor el convenga para realizar el branching. De esta forma la cantidad de tipos de tests a realizar disminuyó a doce (12), ya que ahora, hay una variable menos para combinar.
+
+A continuación se describen cada uno de los tipos tests, como se hizo en la sección anterior, pero ahora con los valores utilizados en esta ronda:
+
+\begin{enumerate}
+\item Tipo1:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_DOWN\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 1\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ -1\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_DEFAULT\\
+
+\item Tipo2:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_DOWN\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 1\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 1   *normal\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_DEFAULT\\
+
+\item Tipo3:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_DOWN\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 1\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 2 *\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_DEFAULT\\
+
+\item Tipo4:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_DOWN\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 2 *\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 1 *\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_DEFAULT\\
+
+\item Tipo5:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_DOWN\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 5 *\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 1 *\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_DEFAULT\\
+
+\item Tipo6:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_DOWN\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_ON *\\
+CPX\_PARAM\_STRONGITLIM $\to$ 2 *\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 1 *\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_DEFAULT\\
+
+\item Tipo7:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_UP *\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 1\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ -1\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_DEFAULT\\
+
+\item Tipo8:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_UP *\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 1\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 1 *\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_DEFAULT\\
+
+\item Tipo9:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_UP *\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 1\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 2 *\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_DEFAULT\\
+
+\item Tipo10:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_UP *\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 2 *\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 1 *\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_DEFAULT\\
+
+\item Tipo11:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_UP *\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+CPX\_PARAM\_STRONGITLIM $\to$ 5 *\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 1 *\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_DEFAULT\\
+
+\item Tipo12:
+
+CPX\_PARAM\_BRDIR $\to$ CPX\_BRDIR\_UP *\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_ON *\\
+CPX\_PARAM\_STRONGITLIM $\to$ 2 *\\
+CPX\_PARAM\_ZEROHALFCUTS $\to$ 1 *\\
+CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_DEFAULT\\
+
+\end{enumerate}
+
+El resultado de estos tests los veremos en el siguiente gráfico, donde se pueden observar que los tiempos requeridos para resolver los problemas, son significativamente menores, aunque siguen siendo relativamente altos, con la combinación actual de parámetros para el grafo de mayor cantidad de nodos, los tiempos rondan entre los 200 y 750 segundos (osea entre 3 y 13 minutos aproximadamente). En la siguiente imagen, se muestran los tiempos hasta grafos de 12 nodos.
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.75]{../tests/resultados/resultados2/tiempos3-12-nodos.png}
+\caption{Vista de la complejidad exponencial hasta gafos de 12 nodos}
+\end{figure}
+
+Como se puede observar, los tipos 7, 8 y 9 en general son los que menos tiempo requieren para resolver el problema. Aunque cuando se llega a resolver grafos con 13 nodos, no es tan así, pero de todas formas siguen estando relativamente bien en tiempo. Con esto se puede pensar que dichas combinaciones son las mejores entre todas las que se testearon, aunque esto no se pude tomar como totalmente cierto, en las rondas de tests se tomará alguno de los tipos que se tienen actualmente para realizar otros tests. Como la idea es que la cantidad de tipos de test no sean muy grandes, se tomará la mejor combinación de valores, que se elegirá de acuerdo a los resultados que se obtengan. Por este motivo, al ver los resultados actuales, pareciera ser que los tipos 7, 8 y 9 son los mejores en general. A continuación se muestra el gráfico global de los tests para cada tipo, de grafos de 3 nodos a grafos de 13 nodos:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.75]{../tests/resultados/resultados2/tiempos3-13-nodos.png}
+\caption{Vista de la complejidad exponencial hasta gafos de 13 nodos}
+\end{figure}
+
+Para observar mas detalladamente que pasa cuando se recibe un grafo de 13 nodos, se hará un zoom al grafico anterior, que mostrará solo los tiempos de cada uno de los tipos de tests para dicho grafo, y aqui se puede observar mejor que los tipos 7, 8 y 9 son los que en general funcionan mas rápido:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.75]{../tests/resultados/resultados2/tiempos13-nodos.png}
+\caption{Vista de la complejidad exponencial hasta gafos de 12 nodos}
+\end{figure}
+
+Algo que se mencionó en el comienzo de la sección principal, es que los tests que se realizaron hasta el momento, se hicieron desactivando algunas características que vienen seteadas por defecto en $Cplex$. Este es uno de los motivos por los cuales los tiempos de resolución de los problemas son tan altos, pero otro de los motivos es que, hasta el momento no se utilizaron ningún tipo de heurística inicial, que permita acotar de una mejor forma el valor objetivo que se busca.
+
+Como el tamaño de los grafos que se utilizaron de prueba, resultaron ser bastante pequeños, se decidió generar heurísticas que permitan acotar lo mejor que se pueda la cantidad de colores de la solución de manera de simplificar el problema y evitar calculos innecesarios. Con esto, se espera que se puedan resolver problemas mas grandes que grafos de 13 nodos.
+
+En la siguiente ronda de tests. se incluirán algunas heurísticas iniciales para realizar dicha acotación, tanto superiormente como inferiormente.
+
+\subsubsection{Ronda número 3}
+
+En esta ronda de pruebas, se agregan tres heurísticas iniciales, para ayudar a $Cplex$ a resolver el problema de forma más rapida, dado que las mismas, sirven para acortar el rango de soluciones posibles, tanto inferiormente como superiormente. Las mismas se detallan en la sección heurísticas iniciales.
+
+Realizando las pruebas nuevamente, con los mismos tipos que la ronda número 2, pero ahora usando las heurísticas iniciales de cota inferior y superior, se notó una mejora abismal, ya que los tiempos disminuyeron significativamente. A continuación se muestra el gráfico con los tiempos requeridos para cada uno de los tipos de test, con grafos de 3 a 13 nodos y 70\% de densidad:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{../tests/resultados/resultados3/tiempos.png}
+\caption{Vista de los tiempos}
+\end{figure}
+
+Como se puede observar, los tiempos, como se había mencionado, son mucho mas cortos, y los mismos son bastante menores a un segundo, para todos los grafos de prueba, y para todos los tipos de combinación de parámetros.  Esto deja ver que las heurísticas iniciales son una herramienta muy importante a la hora preparar una solución para el problema, donde se tratan de buscar, las que sean lo mas baratas en costo de ejecución y lo mas eficiente a la hora de acotar el problema.
+
+Algo mas a observar, es la prevalencia de los tiempos de los tipos 6, 7 y 8, que se destacan entre los tipos de combinación de parámetros, con los primeros puestos en cuanto a tiempo de ejecución.
+
+\section{Heurísticas Iniciales}
+
+%TODO: describir las heuristicas iniciales
