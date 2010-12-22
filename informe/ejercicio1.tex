@@ -422,7 +422,50 @@ Realizando las pruebas nuevamente, con los mismos tipos que la ronda número 2, p
 
 Como se puede observar, los tiempos, como se había mencionado, son mucho mas cortos, y los mismos son bastante menores a un segundo, para todos los grafos de prueba, y para todos los tipos de combinación de parámetros.  Esto deja ver que las heurísticas iniciales son una herramienta muy importante a la hora preparar una solución para el problema, donde se tratan de buscar, las que sean lo mas baratas en costo de ejecución y lo mas eficiente a la hora de acotar el problema.
 
-Algo mas a observar, es la prevalencia de los tiempos de los tipos 6, 7 y 8, que se destacan entre los tipos de combinación de parámetros, con los primeros puestos en cuanto a tiempo de ejecución.
+Algo mas a observar, es la prevalencia de los tiempos de los tipos 7, 8 y 9, que se destacan entre los tipos de combinación de parámetros, con los primeros puestos en cuanto a tiempo de ejecución.
+
+\subsubsection{Ronda número 4}
+
+En esta ronda lo que se planeó hacer es fijar los parámetros que se estuvieron usando para los demás rondas de tests, en particular, elegir alguna combinación de ellos (algún tipo de combinación). Anteriormente, se mencionó que los tipos 7, 8 y 9 eran los que se veían como mejores, dado el tiempo de respuesta a la hora de resolver el problema. Como, se quiere evitar que la cantidad de combinaciones en esta ronda sea la menor que se pueda, se elegirá alguno de los tipos mencionados, en base a un criterio al azar, basado en los resultados obtenidos. Como ambos tres tipos son bastante parejos, con tomar como referencia alguno de ellos, alcanza. Para esta ronda entonces, selecciona el tipo 6.
+
+Las combinaciones que siguen, son en base a nuevos parámetros, con los demás seteados según el tipo 7. Los nuevos parámetros a combinar, tienen que ver con las formas de elegir el nodo($CPX\_PARAM\_NODESEL$, la cual se tomarán los parámetros que hacen pensar que que pueden generar resultados mas interesantes), para seguir con el árbol de branching y con las heurísticas locales dentro de cada branching($CPX\_PARAM\_LBHEUR$). Como se supone que los resultados del primer parámetro puede variar de acuerdo a si hay o no heurísticas locales, parece ser interesante ver que pasa con esta combinación de parámetros.
+
+Los tipos de combinación se detallan a continuación:
+
+\begin{enumerate}
+\item Tipo1:
+
+CPX\_PARAM\_NODESEL $\to$ CPX\_NODESEL\_BESTBOUND\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF\\
+
+\item Tipo2:
+
+CPX\_PARAM\_NODESEL $\to$ CPX\_NODESEL\_BESTBOUND\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_ON *\\
+
+\item Tipo3:
+
+CPX\_PARAM\_NODESEL $\to$ CPX\_NODESEL\_BESTEST *\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF *\\
+
+\item Tipo4:
+
+CPX\_PARAM\_NODESEL $\to$ CPX\_NODESEL\_BESTEST\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_ON *\\
+
+\item Tipo5:
+
+CPX\_PARAM\_NODESEL $\to$ CPX\_NODESEL\_DFS *\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_OFF *\\
+
+\item Tipo6:
+
+CPX\_PARAM\_NODESEL $\to$ CPX\_NODESEL\_DFS\\
+CPX\_PARAM\_LBHEUR $\to$ CPX\_ON\\
+
+\end{enumerate}
+
+
 
 \section{Heurísticas Iniciales}
 
