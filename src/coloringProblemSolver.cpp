@@ -55,6 +55,174 @@ inline int comparePtrDouble (const void * a, const void * b)
     return 0;
 }
 
+static int CPXPUBLIC corteCicloImpar(CPXCENVptr env,
+                                     void       *cbdata,
+                                     int        wherefrom,
+                                     double*    x,
+                                     double**   pOrdColumnValues,
+                                     int        nColumns )
+{
+
+    int status = 0;
+/*
+
+    int nColumnsPerGraphNode = g_nHeuristicColorBounds.second;
+
+    // iniciamos la busqueda de un ciclo impar
+    int nColumn = ((long)pOrdColumnValues[0] - (long)x) / sizeof(double);
+    // estas cuentas estan fuertemente respaldadas por el formato del .col generado
+    int nColor = (nColumn - nColorColumns) % nColumnsPerGraphNode;
+    double nColorValue = (nColor < nColorColumns) ? x[nColor] : 1;
+    double nColumnValueSum = 0;
+
+    vector<Node> vOddCycleNodes;
+    vector<int> vOddCycleColumnValues;
+    int nCycleSize = 0;
+    bool bKeepLookingNewNodes = true;
+    for( int nIdx = 0; nIdx < nColumns && bKeepLookingNewNodes; nIdx++ )
+    {
+        int nCurrentColumn = ((long)pOrdColumnValues[nIdx] - (long)x) / sizeof(double);
+        int nCurrentColor = (nCurrentColumn - nColorColumns) % nColumnsPerGraphNode;
+        if( nCurrentColor != nColor )
+            continue;
+
+        Node nCurrentNode = (nCurrentColumn - nColorColumns) / nColumnsPerGraphNode;
+
+        bool bFoundCycleAdj = false;
+        for( int i = 0; i < nCycleSize && bKeepLookingNewNodes; i++ )
+        {
+            if( g_vvbGraphTable[ vOddCycleNodes[i] ][ nCurrentNode ] )
+            {
+                bKeepLookingNewNodes = !bFoundCycleAdj || (nCycleSize - i + 1) % 2 == 0;
+                bFoundCycleAdj = true;
+            }
+        }
+
+        if( vOddCycleNodes.size() == 0 || bFoundCycleAdj || !bKeepLookingNewNodes )
+        {
+            vOddCycleNodes.push_back( nCurrentNode );
+            vOddCycleColumnValues.push_back( nCurrentColumn );
+            nColumnValueSum += x[ nCurrentColumn ];
+            nCycleSize++;
+        }
+    }
+
+    if( nColumnValueSum <= vOddCycleNodes.size()*nColorValue + EPSILON )
+    {
+        int* cutInd = new int[ nCurrentCliqueSize ];
+        double* cutCoefVal = new double[ nCurrentCliqueSize ];
+        for(int i = 0; i < nCurrentCliqueSize; i++)
+        {
+            cutInd[i] = vCliqueColumnValues[i].nColumn;
+            cutCoefVal[i] = vCliqueColumnValues[i].nValue;
+        }
+
+        status = CPXcutcallbackadd(  env, cbdata, wherefrom,
+                                     nCurrentCliqueSize,
+                                     nColorValue, 'L',
+                                     cutInd, cutCoefVal, 1 );
+        if ( status ) {
+            printf ("Failed to add clique cut.\n");
+            return status;
+        }
+      
+        delete [] cutInd;
+        delete [] cutCoefVal;
+
+    }
+
+*/
+
+    return status;
+
+}
+
+static int CPXPUBLIC corteClique(CPXCENVptr env,
+                                 void       *cbdata,
+                                 int        wherefrom,
+                                 double*    x,
+                                 double**   pOrdColumnValues,
+                                 int        nColumns )
+{
+    int status = 0;
+
+    int nColumnsPerGraphNode = g_nHeuristicColorBounds.second;
+
+    // iniciamos la busqueda de una clique
+    int nColumn = ((long)pOrdColumnValues[0] - (long)x) / sizeof(double);
+    // estas cuentas estan fuertemente respaldadas por el formato del .col generado
+    int nColor = (nColumn - nColorColumns) % nColumnsPerGraphNode;
+    double nColorValue = (nColor < nColorColumns) ? x[nColor] : 1;
+    double nColumnValueSum = 0;
+
+    vector<Node> vCliqueNodes;
+    vector<int> vCliqueColumns;
+    size_t nCurrentCliqueSize = 0;
+    // vamos a ir agregando de a un nodo por vez, verificando siempre que el nodo
+    // pertenezca a la clique y esté pintado del mismo color j, y que la sumatoria de los colores
+    // sea menor o igual a wj + EPSILON
+    for( int nIdx = 0; nIdx < nColumns && nColumnValueSum <= nColorValue + EPSILON; nIdx++ )
+    {
+        int nCurrentColumn = ((long)pOrdColumnValues[nIdx] - (long)x) / sizeof(double);
+        int nCurrentColor = (nCurrentColumn - nColorColumns) % nColumnsPerGraphNode;
+        if( nCurrentColor != nColor )
+            continue;
+
+        Node nCurrentNode = (nCurrentColumn - nColorColumns) / nColumnsPerGraphNode;
+
+        bool bAddToClique = true;
+        // verificamos que el nodo actual sea adyacente a todos los nodos de la clique
+        for( int i = 0; i < nCurrentCliqueSize && bAddToClique; i++ )
+            bAddToClique = g_vvbGraphTable[ nCurrentNode ][ vCliqueNodes[i] ];
+
+        if( bAddToClique )
+        {
+            // agregamos el nodo actual a la clique y actualizamos la sumatoria
+            vCliqueNodes.push_back( nCurrentNode );
+            vCliqueColumns.push_back( nCurrentColumn );
+
+            nColumnValueSum += x[ nCurrentColumn ];
+            nCurrentCliqueSize++;
+        }
+    }
+
+    // si la sumatoria es mayor al valor del color + EPSILON,
+    // agregar un corte por desigualdad clique
+    if( nColumnValueSum > nColorValue + EPSILON )
+    {
+        int* cutInd = new int[ nCurrentCliqueSize + 1 ];
+        double* cutCoefVal = new double[ nCurrentCliqueSize + 1 ];
+        for(int i = 0; i < nCurrentCliqueSize; i++)
+        {
+            cutInd[i]       = vCliqueColumns[i];
+            cutCoefVal[i]   = 1;
+        }
+
+        int nzcnt = nCurrentCliqueSize;
+        double rhs = 1;
+        if (nColor < nColorColumns)
+        {
+            cutInd[nCurrentCliqueSize] = nColor;
+            cutCoefVal[nCurrentCliqueSize] = -1;
+            nzcnt++;
+            rhs = 0;
+        }
+
+        status = CPXcutcallbackadd(  env, cbdata, wherefrom,
+                                     nzcnt, rhs, 'L', cutInd,
+                                     cutCoefVal, 0 );
+        if ( status ) {
+            printf ("Failed to add clique cut.\n");
+            return status;
+        }
+      
+        delete [] cutInd;
+        delete [] cutCoefVal;
+    }
+
+    return status;
+}
+
 static int CPXPUBLIC cortes (CPXCENVptr env,
                              void       *cbdata,
                              int        wherefrom,
@@ -78,7 +246,6 @@ static int CPXPUBLIC cortes (CPXCENVptr env,
 
     int nNonColorVariables = nColumns - nColorColumns;
 
-    // corte por clique:
     int nValuesLowerTo1 = 0;
     for (int col = 0; col < nNonColorVariables; col++)
     {
@@ -107,74 +274,9 @@ static int CPXPUBLIC cortes (CPXCENVptr env,
     double xDebugOriginal[20]; for(int i = 0; i < 20; i++) { xDebugOriginal[i] = x[i]; }
 */
 
-    int nColumnsPerGraphNode = g_nHeuristicColorBounds.second;
-
-    // iniciamos la busqueda de una clique
-    int nColumn = ((long)pValues[0] - (long)x) / sizeof(double);
-    // estas cuentas estan fuertemente respaldadas por el formato del .col generado
-    int nColor = (nColumn - nColorColumns) % nColumnsPerGraphNode;
-    double nColorValue = (nColor < nColorColumns) ? x[nColor] : 1;
-    double nColumnValueSum = 0;
-
-    vector<Node> vCliqueNodes;
-    vector<ColumnValue> vCliqueColumnValues;
-    size_t nCurrentCliqueSize = 0;
-    // vamos a ir agregando de a un nodo por vez, verificando siempre que el nodo
-    // pertenezca a la clique y esté pintado del mismo color j, y que la sumatoria de los colores
-    // sea menor o igual a wj + EPSILON
-    for( int nIdx = 0; nIdx < nValuesLowerTo1 && nColumnValueSum <= nColorValue + EPSILON; nIdx++ )
-    {
-        int nCurrentColumn = ((long)pValues[nIdx] - (long)x) / sizeof(double);
-        int nCurrentColor = (nCurrentColumn - nColorColumns) % nColumnsPerGraphNode;
-        if( nCurrentColor != nColor )
-            continue;
-
-        Node nCurrentNode = (nCurrentColumn - nColorColumns) / nColumnsPerGraphNode;
-
-        bool bAddToClique = true;
-        // verificamos que el nodo actual sea adyacente a todos los nodos de la clique
-        for( int i = 0; i < nCurrentCliqueSize && bAddToClique; i++ )
-            bAddToClique = g_vvbGraphTable[ nCurrentNode ][ vCliqueNodes[i] ];
-
-        if( bAddToClique )
-        {
-            // agregamos el nodo actual a la clique y actualizamos la sumatoria
-            vCliqueNodes.push_back( nCurrentNode );
-
-            ColumnValue colValNew;
-            colValNew.nColumn = nCurrentColumn;
-            colValNew.nValue = x[nCurrentColumn];
-            vCliqueColumnValues.push_back(colValNew);
-
-            nColumnValueSum += colValNew.nValue;
-            nCurrentCliqueSize++;
-        }
-    }
-
-    // si la sumatoria es mayor a el valor del color + EPSILON,
-    // agregar un corte por desigualdad clique
-    if( nColumnValueSum > nColorValue + EPSILON )
-    {
-        int* cutInd = new int[ nCurrentCliqueSize ];
-        double* cutVal = new double[ nCurrentCliqueSize ];
-        for(int i = 0; i < nCurrentCliqueSize; i++)
-        {
-            cutInd[i] = vCliqueColumnValues[i].nColumn;
-            cutVal[i] = vCliqueColumnValues[i].nValue;
-        }
-
-        status = CPXcutcallbackadd(  env, cbdata, wherefrom,
-                                     nCurrentCliqueSize,
-                                     nColorValue, 'L',
-                                     cutInd, cutVal, 1 );
-        if ( status ) {
-            printf ("Failed to add cut.\n");
-            return status;
-        }
-      
-        delete [] cutInd;
-        delete [] cutVal;
-    }
+    // corte por clique:
+    corteClique     (env, cbdata, wherefrom, x, pValues, nValuesLowerTo1);
+    corteCicloImpar (env, cbdata, wherefrom, x, pValues, nValuesLowerTo1);
 
     delete [] pValues;
     delete [] x;
@@ -571,7 +673,13 @@ int solveProblem(string sFileName, SolvingParameters parameters = NO_PARAMETERS)
     CPXsetintparam(env,CPX_PARAM_CUTPASS,10);             //Number of cutting plane passes
     CPXsetdblparam(env,CPX_PARAM_CUTSFACTOR,6.0);         //Row multiplier factor for cuts
 */
-
+//    CPXsetintparam(env,CPX_PARAM_DISJCUTS,2);
+//    CPXsetintparam(env,CPX_PARAM_FLOWCOVERS,2);
+//    CPXsetintparam(env,CPX_PARAM_FLOWPATHS,2);
+//    CPXsetintparam(env,CPX_PARAM_FRACCUTS,2);
+//    CPXsetintparam(env,CPX_PARAM_GUBCOVERS,2);
+//    CPXsetintparam(env,CPX_PARAM_IMPLBD,2);
+//    CPXsetintparam(env,CPX_PARAM_CLIQUES,2);
 
     //Parametros para salida por pantalla
     CPXsetintparam (env, CPX_PARAM_SCRIND, CPX_ON);      //para mostrar las iteraciones
@@ -637,7 +745,7 @@ int solveProblem(string sFileName, SolvingParameters parameters = NO_PARAMETERS)
     cutinfo.nColumns = numcols;
 
     // asignamos la heuristica de separacion al problema
-//    status = CPXsetcutcallbackfunc (env, cortes, &cutinfo);
+    status = CPXsetcutcallbackfunc (env, cortes, &cutinfo);
     if ( status )
     {
         printf("Problemas al setear rutina de separacion - %d.\n", status);
@@ -703,7 +811,7 @@ int main(int argc, char *argv[])
     if( argv[1] != 0 )
         fileInput = argv[1];
     else
-        fileInput = "test25-70.col";
+        fileInput = "Coloreo.col";
 
-    return solveProblem(fileInput, NO_PARAMETERS);
+    return solveProblem(fileInput, CHROMATIC_NUMBER_BOUND_HEURISTICS);
 }
