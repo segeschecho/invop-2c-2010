@@ -426,7 +426,7 @@ Algo mas a observar, es la prevalencia de los tiempos de los tipos 7, 8 y 9, que
 
 \subsubsection{Ronda número 4}
 
-En esta ronda lo que se planeó hacer es fijar los parámetros que se estuvieron usando para los demás rondas de tests, en particular, elegir alguna combinación de ellos (algún tipo de combinación). Anteriormente, se mencionó que los tipos 7, 8 y 9 eran los que se veían como mejores, dado el tiempo de respuesta a la hora de resolver el problema. Como, se quiere evitar que la cantidad de combinaciones en esta ronda sea la menor que se pueda, se elegirá alguno de los tipos mencionados, en base a un criterio al azar, basado en los resultados obtenidos. Como ambos tres tipos son bastante parejos, con tomar como referencia alguno de ellos, alcanza. Para esta ronda entonces, selecciona el tipo 6.
+En esta ronda lo que se planeó hacer es fijar los parámetros que se estuvieron usando para los demás rondas de tests, en particular, elegir alguna combinación de ellos (algún tipo de combinación). Anteriormente, se mencionó que los tipos 7, 8 y 9 eran los que se veían como mejores, dado el tiempo de respuesta a la hora de resolver el problema. Como, se quiere evitar que la cantidad de combinaciones en esta ronda sea muy grande, se elegirá alguno de los tipos mencionados, en base a un criterio al azar, basado en los resultados obtenidos. Como ambos tres tipos son bastante parejos, con tomar como referencia alguno de ellos, alcanza. Para esta ronda entonces, selecciona el tipo 7.
 
 Las combinaciones que siguen, son en base a nuevos parámetros, con los demás seteados según el tipo 7. Los nuevos parámetros a combinar, tienen que ver con las formas de elegir el nodo($CPX\_PARAM\_NODESEL$, la cual se tomarán los parámetros que hacen pensar que que pueden generar resultados mas interesantes), para seguir con el árbol de branching y con las heurísticas locales dentro de cada branching($CPX\_PARAM\_LBHEUR$). Como se supone que los resultados del primer parámetro puede variar de acuerdo a si hay o no heurísticas locales, parece ser interesante ver que pasa con esta combinación de parámetros.
 
@@ -465,8 +465,36 @@ CPX\_PARAM\_LBHEUR $\to$ CPX\_ON\\
 
 \end{enumerate}
 
+Las pruebas se realizaron con grafos de 25 a 50 nodos, con un 70\% de densidad. En el gráfico de tiempos que sigue se puede observar que los tiempos son bastante buenos. Pero también hay que decir que si bien, las estrategias elegidas para correr estas pruebas resultaron ser buenas para las instancias de prueba graficadas, para la instancia de 25 nodos, resultó ser muy mala, ya que los tiempos para resolver el problema, eran muy altos, casi al mismo nivel de los tiempos de la ronda 1 para los grafos de 13 nodos. Con esto se puede deducir que las estrategias elegidas pueden resultar muy buenas o muy malas, dependiendo de la instancia en la que la pruebe.
 
+Por el motivo mencionado anteriormente, se decidió no graficar los tiempos para la instancia de 25 nodos, ya que representa un outlier dentro de la ronda, y hace que los demás tiempos no se puedan observar correctamente.
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.75]{../tests/resultados/resultados4/tiempos.png}
+\caption{Vista de los tiempos}
+\end{figure}
+
+Al contrario de lo que se pensaba antes de realizar las pruebas, se nota que los tiempos de ejecución son muy similares entre los diferentes tipos de parámetros. Esto indica que el hecho de tener o no heurísticas locales en cada branching, no varía mucho los resultados. Aunque si se observa bien, los tipos 1, 3 y 5, que tienen las heurísticas locales desactivadas, en las ultimas tres instancias, tardan un poquito mas que los tipos con las heurísticas activadas.
+
+Con respecto a la selección del nodo del árbol para realizar el branching, si se toman los tipos 2,4 y 6 que son los que en las pruebas consumen menos tiempos en general, se puede ver que casi no hay diferencia entre una elección u otra, por lo que podemos decir que parece no ser muy importante este parámetro como se creía para este problema.
+
+Para esta ronda, además de analizar los tiempos, se analizaron las heurísticas iniciales, que se programaron para obtener cotas superiores e inferiores al problema antes de correr $Cplex$ para la instancia de entrada, de forma tal simplificar el modelo y sacar variables o setear valores fijos a ciertos colores, haciendo que el tiempo disminuya.
+
+A continuación para las instancias de prueba se realizó un gráfico, en el que se ve, la solución óptima de cada una de las instancias (notar que la instancia de 25 nodos fué salteada, de manera que los datos en ese caso deben ignorarse), y cuales son los valores que obtuvieron las heurísticas iniciales, tanto acotando la cantidad de colores superiormente, como inferiormente:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.75]{../tests/resultados/resultados4/cotas.png}
+\caption{Vista de los tiempos}
+\end{figure}
+
+Como se puede observar, las cotas funcionaron bastante bien, siendo así que no se encontraron muy distanciadas de la solución óptima. Esto es muy bueno verlo para poder entender por que los tiempos de respuesta son bajos, es por que en general para las instancias probadas, la cantidad de información que $Cplex$ tenía que manejar era bastante mas reducida que la información que puede haber inicialmente sin correr las heurísticas iniciales.
 
 \section{Heurísticas Iniciales}
+
+\subsection{De Cota Superior}
+
+\subsection{De Cota Inferior}
 
 %TODO: describir las heuristicas iniciales
