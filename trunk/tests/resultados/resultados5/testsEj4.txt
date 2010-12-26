@@ -1,0 +1,46 @@
+////// del ejercicio 1
+tipo 1:
+
+heuristicas propias
+cplex normal SIN cortes
+Parametros según ejercicio 1 (los del tipo 7 del ej1 que eran los mejores)
+
+tipo 2:
+
+heuristicas Cplex (preprocesamiento)
+cplex normal SIN cortes
+Parametros según ejercicio 1 (los del tipo 7 del ej1 que eran los mejores)
+
+
+/////// del ejercicio 3
+
+tipo 3:
+
+heuristicas propias
+cplex normal CON cortes de Cplex
+Parametros según ejercicio 1 (los del tipo 7 del ej1 que eran los mejores)
+
+tipo 4:
+
+heuristicas propias
+cplex normal CON cortes Propios
+Parametros según ejercicio 1 (los del tipo 7 del ej1 que eran los mejores)
+
+
+tipo 5:
+
+heuristicas Cplex
+cplex normal CON cortes de Cplex
+Parametros según ejercicio 1 (los del tipo 7 del ej1 que eran los mejores)
+
+tipo 6:
+
+heuristicas propias
+cplex normal CON cortes Propios
+Parametros según ejercicio 1 (los del tipo 7 del ej1 que eran los mejores)
+
+tipo 7: (Cplex solo)
+
+heuristicas Cplex
+cortes Cplex
+parametros automaticos del ej1
