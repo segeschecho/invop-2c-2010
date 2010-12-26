@@ -565,7 +565,7 @@ int BFSColoring( Node nStartingNode )
     return nColors;
 }
 
-int heuristicBFSUpperBound(int nIterations, vector< pair< int, Node > > vnNodesOrderedByDegree)
+int heuristicBFSUpperBound(int nIterations, vector< pair< int, Node > >& vnNodesOrderedByDegree)
 {
     int nBFSColoringNumber = 0;
     if( vnNodesOrderedByDegree.size() > 0 )
@@ -670,7 +670,7 @@ int maximalClique( Node startingNode )
     return nCliqueNodes;
 }
 
-int heuristicCliqueLowerBound( int iterations, vector< pair< int, Node > > vnNodesOrderedByDegree )
+int heuristicCliqueLowerBound( int iterations, vector< pair< int, Node > >& vnNodesOrderedByDegree )
 {
     int maximalCliqueNodes = 0;
 
