@@ -375,7 +375,7 @@ CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_DEFAULT\\
 
 \end{enumerate}
 
-El resultado de estos tests los veremos en el siguiente gráfico, donde se puede observar que los tiempos requeridos para resolver los problemas son significativamente menores, aunque siguen siendo relativamente altos. Con la combinación actual de parámetros, para el grafo de mayor cantidad de nodos los tiempos rondan entre los 200 y 750 segundos (osea entre 3 y 13 minutos aproximadamente). En la siguiente imagen, se muestran los tiempos para grafos de hasta 12 nodos.
+El resultado de estos tests los veremos en el siguiente gráfico, donde se puede observar que los tiempos requeridos para resolver los problemas son significativamente menores, aunque siguen siendo relativamente altos. Con la combinación actual de parámetros, para el grafo de mayor cantidad de nodos los tiempos rondan entre los 200 y 750 segundos (osea entre 3 y 13 minutos aproximadamente). En la siguiente imagen, se muestran los tiempos para grafos de hasta 13 nodos.
 
 %\begin{figure}[H]
 %\centering
@@ -409,7 +409,7 @@ En la siguiente ronda de tests se incluirán algunas heurísticas iniciales para r
 
 \subsubsection{Ronda número 3}
 
-En esta ronda de pruebas se agregan tres heurísticas iniciales para ayudar a $CPLEX$ a resolver el problema de forma más rapida, dado que las mismas sirven para acortar el rango de valores de la función objetivo, tanto inferiormente como superiormente. Las mismas se detallan en la sección ``Heurísticas Iniciales''.
+En esta ronda de pruebas se agregan tres heurísticas iniciales para ayudar a $CPLEX$ a resolver el problema de forma más rápida, dado que las mismas sirven para acortar el rango de valores de la función objetivo, tanto inferiormente como superiormente. Las mismas se detallan en la sección ``Heurísticas Iniciales''.
 
 Realizando las pruebas nuevamente con los mismos tipos que la ronda número 2, pero ahora usando las heurísticas iniciales de cota inferior y superior, se notó una notable mejora de tiempos. A continuación se muestra el gráfico con los tiempos requeridos para cada uno de los tipos de test, con grafos de 3 a 13 nodos y 70\% de densidad:
 
@@ -509,6 +509,10 @@ Los métodos utilizados para esto son $heuristicBFSUpperBound$ y $heuristicSequen
 \begin{itemize}
 
 \item $heuristicBFSUpperBound$: Como lo indica su nombre, se recorre el grafo en orden $BFS$ desde algún nodo inicial dado, y se va coloreando los nodos teniendo en cuenta sus adyacentes y los colores ya usados. Se identifica los colores numerándolos y se busca pintarlos siempre con el color más chico. Por ejemplo, dado un nodo si sus adyacentes se encuentran pintados con los colores 2, 3 y 4, y no hay ninguno pintado con el color 1, entonces se procede a pintar dicho nodo con ese color.
+
+Puede pasar que haciendo bfs, no se recorra todo el grafo, ya que el mismo puede no ser conexo, por esta razón lo que se hace es seguir con el proceso de bfs y de coloreo para algún nodo que haya quedado sin marcar, hasta que todo el grafo haya sido recorrido.
+
+Hasta la ronda número 4, se utilizó $heuristicBFSUpperBound$ como se detalla en el párrafo anterior. Para las pruebas que siguen, se optimizó el método, haciendo que los nodos del grafo se encuentren ordenados por su grado, y de esta forma comenzar el proceso de bfs por el nodo de mayor grado. Otra mejora que se le hizo al método, es asignarle un parámetro adicional, que indica cuantas veces se hace $heuristicBFSUpperBound$ para el grafo, que aprovecha el ordenamiento de mayor a menor grado de los nodos, y en cada corrida, va tomando como nodo inicial, el nodo de mayor grado disponible en ese momento (que no haya sido usado para corridas anteriores).
 
 \item $heuristicSequentialUpperBound$: Se ordenan los nodos de acuerdo a sus grados, y se van recorriendo de mayor a menor grado. Al igual que la heurística anterior, se identifican los colores numerándolos. Dado un nodo, se lo pinta del menor número disponible, evitando pintarlo del mismo color que alguno de sus vecinos, al igual que la heurística anterior.
 \end{itemize}
