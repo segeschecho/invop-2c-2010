@@ -1,6 +1,6 @@
 \section{Ejercicio 2}
 
-Para demostrar que las desigualdades son válidas, se utilizará el método del absurdo. La desigualdad es válida para el $CP$ original (sin relajación) si la desigualdad se cumple para todos los puntos dentro de la cápsula convexa de soluciones factibles enteras. Por lo tanto el planteo inicial será suponer que el punto no cumple con la nueva restricción pero sí con las condiciones originales.
+Para demostrar que las desigualdades son válidas, se utilizará el método del absurdo y demostración por inducción. La desigualdad es válida para el $CP$ original (sin relajación) si la desigualdad se cumple para todos los puntos dentro de la cápsula convexa de soluciones factibles enteras. Por lo tanto el planteo inicial será suponer que el punto no cumple con la nueva restricción pero sí con las condiciones originales.
 
 Supongamos que existe un coloreo válido para el $CP$ original. Por lo tanto existe $W$ = $(w_0, w_1, ... , w_n)$ y $X = \{x_{vj} | v = 0, ..., n \wedge j = 0, ..., n\}$, donde $v$ son los nodos y $j$ son los colores con los que se pintaron los mismos. Entonces para $X$ vale:
 
@@ -15,7 +15,7 @@ Supongamos que existe un coloreo válido para el $CP$ original. Por lo tanto exis
 
 \end{enumerate}
 
-\subsection{Desigualdad 1: Clique}
+\subsection{Demostración Desigualdad 1: Clique}
 
 Sea K una Clique del grafo y sea $j_0$ cualquier color tal que $1 \le j_0 \le n$. Supongamos que la solución no cumple con la desigualdad clique, entonces sabemos que vale lo siguiente:
 
@@ -84,7 +84,7 @@ Lo cual resulta absurdo, pues por (4) $w_j \in \{0, 1\} \forall 1 \le j \le n$. 
 
 Dado que no hay más alternativas, la suposición de que la desigualdad no se cumple es falsa. $\qed$
 
-\subsection{Desigualdad 2: Agujero de Longitud Impar}
+\subsection{Demostración Desigualdad 2: Agujero de Longitud Impar}
 
 Sea $C_{2k+1}$ el conjunto de vértices dentro de un agujero de longitud $2k+1$, con $k >= 2$. Supongamos que la solución no cumple con la desigualdad agujero impar. Por lo tanto podemos decir que $\exists k >= 2$ tal que:
 
@@ -124,3 +124,61 @@ Para un circuito de longitud $2k+1$, la máxima cantidad de nodos pintados del mi
 \end{itemize}
 
 Dado que no hay más alternativas, la suposición de que la desigualdad no se cumple es falsa. $\qed$
+
+
+\subsection{Heurística de Separación: Clique}
+
+Para realizar esta implementación de un método de separación basado en clique, se realizó un método que es llamado por el procedimiento $cortes$, que es una función que llama $Cplex$, cada vez que va a realizar cortes para el problema, por ende la función $cortes$ es una función callback de $Cplex$.
+
+El método que realiza el corte se llama $corteClique$ y está incluido en las fuentes del programa que resuelve el problema. La idea es bastante simple, y se procede a realizar la descripción de los pasos a continuación:
+
+\begin{enumerate}
+\item Organización de los elementos de entrada: Antes de realizar la llamada a la función $corteClique$, lo que se hace es organizar la información recibida por $Cplex$ de manera de quedarse con los datos que son relevantes para el método de corte. Como $corteClique$ necesita de un nodo para empezar a realizar su tarea, el procedimiento antes de llamarlo es ordenar los valores del problema que se correspondan con nodos del grafo, de mayor valor a menor valor, para los nodos que tengan valores entre cero y uno. El motivo por el cual se hace esto antes, es por que hay mas probabilidad de violar la desigualdad clique,  ya que la idea es buscar aquella clique con el valor de sumatoria más grande. Con esto entonces, se llama al método de corte clique, que recibe el $X$ de la solución relajada en ese momento, y los nodos ordenados por sus valores de mayor a menor.
+
+\item Una vez llamado al método de corte, la idea de lo que se hace en el es simple. Lo que se trata de hacer es generar una clique a partir del nodo con mayor valor, relacionado con la entrada que se mencionó en el paso anterior. A partir de este nodo se va generando una clique, primero viendo si el siguiente nodo a ser seleccionado, se encuentra pintado del mismo color que el nodo inicial. Si esto pasa, entonces se verifica que el mismo sea adyacente a los nodos que se encuentran en la clique, y si esto resulta ser verdad, se agrega, el nodo a la restricción de clique.
+
+Una vez que se agrega un nodo a la clique, se verifica además si la desigualdad se sigue cumpliendo. Si la desigualdad deja de cumplirse entonces, se genera un corte con la violación de la desigualdad y se termina con el método. Si la desigualdad sigue cumpliéndose, se continúa con otro nodo.
+
+Si se llega a que no se puede generar una clique que haga violar la desigualdad, entonces el método termina, pero sin agregar ningún corte.
+
+\end{enumerate}
+
+A continuación se agrega el pseudocódigo para mostrar mejor la idea que se explico anteriormente.
+
+\begin{algorithm}[H]
+\caption{Corte Clique}
+%\label{alg:algoritmo2_1}
+\begin{algorithmic}[1]
+\PARAMS{Datos de $Cplex$}
+\STATE Ordenar los x\'s de acuerdo a su valor y que estén entre 0 y 1.
+\STATE Obtener el nodo $X_m$ con mayor valor.
+\STATE Agregar $X_m$ a la clique $K$
+\FOR{Cada nodo $X_i$ que siguen en el ordenamiento y que tenga el mismo color que $X_m$}
+	\IF{$X_i$ es adyacente a todos los nodos de $K$}
+		\STATE agregar $X_i$ a $K$
+		\IF{la sumatoria de valores de $K$ es mayor que el valor de $W_{j0}<e$, donde j0 es el color de $X_m$}
+			\STATE Generar la desigualdad basada en $K$, agregarla al problema y salir del ciclo.
+		\ENDIF
+	\ENDIF
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+
+\subsection{Heurística de Separación: Agujero Impar}
+
+El método que realiza los cortes de tipo agujero impar es $corteCicloImpar$, que se llama cada vez que $Cplex$ intenta hacer un corte. La idea del funcionamiento de este método es simple. Se parte de la misma base que la heurística de clique descripta anteriormente, es decir partiendo de la base de que los valores relacionados a cada nodo se encuentran ordenados de mayor a menor, para maximizar la probabilidad en este caso de encontrar un ciclo que viole la desigualdad agujero impar. A continuación se describen los pasos mas importantes del algoritmo.
+
+\begin{enumerate}
+\item Una vez recibidos los datos que son pasados por $Cplex$ y con los nodos ordenados de mayor a menor, lo que se hace es partir del nodo con mayor valor y realizar un bfs, de manera de construir un árbol, en base al grafo relacionado al problema actual.
+\item A medida que se hace el bfs y a medida que va creciendo el árbol, se verifica si existen ciclos impares entre cada par de nodos que sean hojas en ese paso y sean adyacentes entre si. La elección de las hojas no es al azar sino que se eligen los pares que pertenezcan a diferentes raíces. El concepto anterior puede resultar ambiguo por lo que se dará una definición un poco mas formal de lo que quiere decir que dos hojas tengan distintos nodos raices.
+
+Sea $h_1$ y $h_2$, dos hojas en el arbol de bfs en el paso actual, y sea $R$ el nodo raíz de ese árbol (nodo por el cual se comenzó el proceso de bfs, el nodo con mayor valor entre los ordenados de mayor a menor). Se dice que $h_1$ y $h_2$ tienen diferente nodo raíz, si y solo si desde $R$, existen dos nodos distintos $n_1$ y $n_2$ adyacentes a $r$ en el árbol bfs actual tal que desde $n_1$ se puede llegar a $h_1$ y desde $n_2$ se puede llegar a $h_2$ bajando en el árbol o viceversa.
+
+Con esto entonces queda claro cuales son los nodos que se tienen en cuenta a la hora de ver si se generan ciclos.
+
+Un vez que se sabe que existe un ciclo impar, llama a otro método, llamado $tryToAddOddCycleCut$ que se encarga de generar el ciclo que se generó y verificar si la desigualdad de agujero impar no se cumple para cada uno de los colores disponibles. Sino se cumple, entonces se agrega la o las restricciónes al problema (se puede agregar mas de 1 restricción al problema, si es que para 2 o mas colores se encuentra que la desigualdad se viola), sino se continúa repitiendo el proceso hasta que se haya finalizado el bfs del grafo.
+
+Cabe aclarar además, que si bien para cada ciclo encontrado, pueden agregarse 0, 1 o más restricciones nuevas al problema, se pueden agregar más restricciones a medida que se sigue recorriendo el grafo con bfs, ya que cuando se encuentra un ciclo y este genera alguna restricción nueva al problema, el proceso no se detiene.
+
+\end{enumerate}
