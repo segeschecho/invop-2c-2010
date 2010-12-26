@@ -9,7 +9,6 @@ using namespace std;
 
 #define EPSILON 0.000001
 #define BUFFERSIZE 256
-#define LOWER_BOUND_HEURISTIC_MAX_ITERATIONS 3
 #define min(a, b) (a) < (b) ? (a) : (b)
 #define max(a, b) (a) > (b) ? (a) : (b)
 
@@ -17,31 +16,26 @@ using namespace std;
 
 typedef int Node;
 typedef pair<int, int> Edge;
-
-struct cutinfo {
-   CPXLPptr lp;
-   int      nColumns;
-   int      nOddCycleCutMaxIterations;
-};
-typedef struct cutinfo CUTINFO, *CUTINFOptr;
-
 typedef unsigned int uint;
-
-enum SolvingParameters
-{
-    NO_PARAMETERS = 0,
-    CHROMATIC_NUMBER_BOUND_HEURISTICS = 1,
-};
 
 /********* Declaracion de variables globales *********/
 
-double machineEps;
+bool g_bUseUserCuts;
+bool g_bUseCliqueCuts;
+bool g_bUseOddCycleCuts;
+bool g_bUseCPLEXCuts;
+bool g_bUseInitialHeuristics;
 vector< vector< bool > > g_vvbGraphTable;
 vector< vector< Edge > > g_vvEGraphAdjList;
 pair< int, int > g_nHeuristicColorBounds;
 int g_nNodes;
 int g_nEdges;
-int nColorColumns;
+int g_nMaxIterationsLowerBoundHeuristic;
+int g_nMaxIterationsUpperBoundHeuristic;
+int g_nColorColumns;
+int g_nColumns;
+int g_nMaxOddCycleCutIterations;
+int g_nMaxOddCycleCutVerify;
 
 /********* Implementacion de Funciones *********/
 
@@ -52,12 +46,12 @@ typedef struct _columnValue {
 
 inline int nodeToColumn( Node nNode )
 {
-    return nColorColumns + nNode*g_nHeuristicColorBounds.second;
+    return g_nColorColumns + nNode*g_nHeuristicColorBounds.second;
 }
 
 inline Node columnToNode( int nColumn )
 {
-    return (nColumn - nColorColumns) / g_nHeuristicColorBounds.second;
+    return (nColumn - g_nColorColumns) / g_nHeuristicColorBounds.second;
 }
 
 inline int comparePtrDouble (const void * a, const void * b)
@@ -111,7 +105,7 @@ int tryToAddOddCycleCut(CPXCENVptr env,
     }
 
     // agrego la raiz
-    int nColumn = nodeToColumn(nRootNode);
+    int nColumn            = nodeToColumn(nRootNode);
     arrCutInd[nArrIdx]     = nColumn;
     arrCutCoefVal[nArrIdx] = 1;
 
@@ -121,38 +115,40 @@ int tryToAddOddCycleCut(CPXCENVptr env,
     arrCutCoefVal[nArrIdx] = -1;
     
     // seteamos el color para todo color no fijo
-    for( int nColor = 0; nColor < nColorColumns && !status; nColor++ )
+    for( int nColor = 0; nColor < g_nColorColumns && !status; nColor++ )
     {
         double nColumnValueSum = 0;
         int nzcnt = nCycleSize + 1;
-        for( int i = 0; i < nzcnt; i++ )
-        {
-            arrCutInd[i]++;
+        for( int i = 0; i < nCycleSize; i++ )
             nColumnValueSum += x[ arrCutInd[i] ];
-        }
 
         double nColorValue = x[nColor];
         if( nColumnValueSum > ((nCycleSize - 1) / 2)*nColorValue + EPSILON )
             status = CPXcutcallbackadd(  env, cbdata, wherefrom,
                                          nzcnt, 0, 'L', arrCutInd,
                                          arrCutCoefVal, 0 );
+
+        // cambio el color
+        for( int i = 0; i < nzcnt; i++ )
+            arrCutInd[i]++;
     }
 
     // seteamos el color para todo color fijo
-    for( int nColor = nColorColumns; nColor < nColorsCount && !status; nColor++ )
+    for( int nColor = g_nColorColumns; nColor < nColorsCount && !status; nColor++ )
     {
         double nColumnValueSum = 0;
         int nzcnt = nCycleSize;
-        for( int i = 0; i < nzcnt; i++ )
-        {
-            arrCutInd[i]++;
+        for( int i = 0; i < nCycleSize; i++ )
             nColumnValueSum += x[ arrCutInd[i] ];
-        }
 
         if( nColumnValueSum > ((nCycleSize - 1) / 2) + EPSILON )
             status = CPXcutcallbackadd(  env, cbdata, wherefrom,
                                          nzcnt, 1, 'L', arrCutInd,
                                          arrCutCoefVal, 0 );
+
+        // cambio el color
+        for( int i = 0; i < nzcnt; i++ )
+            arrCutInd[i]++;
     }
 
     if ( status )
@@ -163,12 +159,13 @@ int tryToAddOddCycleCut(CPXCENVptr env,
     return status;
 }
 
-static int corteCicloImpar(CPXCENVptr env,
-                           void       *cbdata,
-                           int        wherefrom,
-                           double*    x,
-                           double**   pOrdColumnValues,
-                           int        nColumns )
+int corteCicloImpar(CPXCENVptr env,
+                    void*      cbdata,
+                    int        wherefrom,
+                    void       *cbhandle,
+                    double*    x,
+                    double**   pOrdColumnValues,
+                    int        nColumns )
 {
     int status = 0;
 
@@ -184,7 +181,8 @@ static int corteCicloImpar(CPXCENVptr env,
     for (int i = 0; i < g_nNodes; i++)
         pAlreadyStartedFrom[i] = false;
 
-    int nMaxIterations = min( ((cutinfo*)cbdata)->nOddCycleCutMaxIterations, nColumns );
+    int nMaxIterations = min( g_nMaxOddCycleCutVerify, nColumns );
+    int nMaxCyclesVerification = g_nMaxOddCycleCutVerify;
 
     for( int nStartingNodeIdx = 0; nStartingNodeIdx < nMaxIterations; nStartingNodeIdx++ )
     {
@@ -203,44 +201,43 @@ static int corteCicloImpar(CPXCENVptr env,
             pNodeParent[i] = -1;
         }
 
+        size_t nQueueSize = 0;
         // inicializamos los arreglos para el nodo inicial
-        pNodesQueue[0]     = nStartingNode;
-        pNodeLevel[0]      = 0;
-        pNodeRoot[0]       = nStartingNode;
+        pNodesQueue[nQueueSize++] = nStartingNode;
+        pNodeLevel[nStartingNode] = 0;
+        pNodeRoot[nStartingNode]  = nStartingNode;
 
         // inicializamos los arreglos para los
         // nodos vecinos al nodo inicial
-        vector< Edge >& vAdjRootNode = g_vvEGraphAdjList[ 0 ];
+        vector< Edge >& vAdjRootNode = g_vvEGraphAdjList[ nStartingNode ];
         size_t nAdjCount = vAdjRootNode.size();
         for ( uint i = 0; i < nAdjCount; i++)
         {
             Node nRootChild = vAdjRootNode[i].second;
 
-            pNodesQueue[i+1]       = nRootChild;
-            pNodeLevel[nRootChild] = 1;
-            pNodeRoot[nRootChild]  = nRootChild;
-            pNodeParent[nRootChild]= nStartingNode;
+            pNodesQueue[nQueueSize++] = nRootChild;
+            pNodeLevel[nRootChild]    = 1;
+            pNodeRoot[nRootChild]     = nRootChild;
+            pNodeParent[nRootChild]   = nStartingNode;
         }
 
-        size_t nQueueSize = nAdjCount + 1;
         uint nIdx = 1;
-        int nLevel = 1;
+        int nLevel = 2;
         // hacemos bfs
-        while (nIdx < nQueueSize)
+        while (nIdx < nQueueSize && nMaxCyclesVerification > 0)
         {
-            nLevel++;
             int nNewSize = nQueueSize;
-            while (nIdx < nQueueSize)
+            while (nIdx < nQueueSize && nMaxCyclesVerification > 0)
             {
                 Node nParentNode = pNodesQueue[nIdx];
                 vector< Edge >& vAdjCurrNode = g_vvEGraphAdjList[ nParentNode ];
                 size_t nAdjCount = vAdjCurrNode.size();
 
-                for (uint i = 0; i < nAdjCount; i++)
+                for (uint i = 0; i < nAdjCount && nMaxCyclesVerification > 0; i++)
                 {
                     Node nChildNode = vAdjCurrNode[i].second;
                     
-                    // si el hijo ya fue visitado
+                    // si ya tiene un nivel asignado, el hijo ya fue visitado
                     if (pNodeLevel[nChildNode] > -1)
                     {
                         // si el hijo no es su padre
@@ -249,9 +246,12 @@ static int corteCicloImpar(CPXCENVptr env,
                             int nCycleSize = pNodeLevel[nChildNode] + nLevel;
                             // si tienen distintas raices y son una cantidad impar de nodos >= 5
                             if ( pNodeRoot[nChildNode] != pNodeRoot[nParentNode] && nCycleSize > 4 && nCycleSize % 2 == 1 )
+                            {
                                 // tenemos un ciclo impar! Intentamos agregar un corte
                                 tryToAddOddCycleCut(env, cbdata, wherefrom, x, nCycleSize, nParentNode,
                                                     nChildNode, nStartingNode, pNodeParent);
+                                nMaxCyclesVerification--;
+                            }
                         }
                     }
                     else
@@ -267,19 +267,27 @@ static int corteCicloImpar(CPXCENVptr env,
                 nIdx++;
             }
 
+            nLevel++;
             nQueueSize = nNewSize;
         }
     }
 
+    delete [] pNodeLevel;
+    delete [] pNodeRoot;
+    delete [] pNodesQueue;
+    delete [] pNodeParent;
+    delete [] pAlreadyStartedFrom;
+
     return status;
 }
 
-static int CPXPUBLIC corteClique(CPXCENVptr env,
-                                 void       *cbdata,
-                                 int        wherefrom,
-                                 double*    x,
-                                 double**   pOrdColumnValues,
-                                 int        nColumns )
+int corteClique(CPXCENVptr env,
+                void       *cbdata,
+                int        wherefrom,
+                void       *cbhandle,
+                double*    x,
+                double**   pOrdColumnValues,
+                int        nColumns )
 {
     int status = 0;
 
@@ -288,8 +296,8 @@ static int CPXPUBLIC corteClique(CPXCENVptr env,
     // iniciamos la busqueda de una clique
     int nColumn = ((long)pOrdColumnValues[0] - (long)x) / sizeof(double);
     // estas cuentas estan fuertemente respaldadas por el formato del .col generado
-    int nColor = (nColumn - nColorColumns) % nColumnsPerGraphNode;
-    double nColorValue = (nColor < nColorColumns) ? x[nColor] : 1;
+    int nColor = (nColumn - g_nColorColumns) % nColumnsPerGraphNode;
+    double nColorValue = (nColor < g_nColorColumns) ? x[nColor] : 1;
     double nColumnValueSum = 0;
 
     vector<Node> vCliqueNodes;
@@ -301,7 +309,7 @@ static int CPXPUBLIC corteClique(CPXCENVptr env,
     for( int nIdx = 0; nIdx < nColumns && nColumnValueSum <= nColorValue + EPSILON; nIdx++ )
     {
         int nCurrentColumn = ((long)pOrdColumnValues[nIdx] - (long)x) / sizeof(double);
-        int nCurrentColor = (nCurrentColumn - nColorColumns) % nColumnsPerGraphNode;
+        int nCurrentColor = (nCurrentColumn - g_nColorColumns) % nColumnsPerGraphNode;
         if( nCurrentColor != nColor )
             continue;
 
@@ -337,7 +345,7 @@ static int CPXPUBLIC corteClique(CPXCENVptr env,
 
         int nzcnt = nCurrentCliqueSize;
         double rhs = 1;
-        if (nColor < nColorColumns)
+        if (nColor < g_nColorColumns)
         {
             cutInd[nCurrentCliqueSize] = nColor;
             cutCoefVal[nCurrentCliqueSize] = -1;
@@ -368,25 +376,22 @@ static int CPXPUBLIC cortes (CPXCENVptr env,
 {
     int status = 0;
 
-    CUTINFOptr cutinfo = (CUTINFOptr) cbhandle;
-    int nColumns = cutinfo->nColumns;
-    double* x = new double[nColumns];
-
     *useraction_p = CPX_CALLBACK_DEFAULT;
 
-    status = CPXgetcallbacknodex(env, cbdata, wherefrom, x, 0, nColumns - 1);
+    double* x = new double[g_nColumns];
+    status = CPXgetcallbacknodex(env, cbdata, wherefrom, x, 0, g_nColumns - 1);
     if ( status )
     {
         printf("Failed to get node solution.\n");
         return status;
     }
 
-    int nNonColorVariables = nColumns - nColorColumns;
+    int nNonColorVariables = g_nColumns - g_nColorColumns;
 
     int nValuesLowerTo1 = 0;
     for (int col = 0; col < nNonColorVariables; col++)
     {
-        if( x[col + nColorColumns] < 1.0 )
+        if( x[col + g_nColorColumns] < 1.0 )
             nValuesLowerTo1++;
     }
 
@@ -394,9 +399,9 @@ static int CPXPUBLIC cortes (CPXCENVptr env,
     int nAux = 0;
     for (int col = 0; col < nNonColorVariables; col++)
     {
-        if( x[col + nColorColumns] < 1.0 )
+        if( x[col + g_nColorColumns] < 1.0 )
         {
-            pValues[nAux] = &x[col + nColorColumns];
+            pValues[nAux] = &x[col + g_nColorColumns];
             nAux++;
         }
     }
@@ -405,15 +410,11 @@ static int CPXPUBLIC cortes (CPXCENVptr env,
     // para sacar el nodo correspondiente a ese valor se puede hacer
     // ((long)pValues[col] - (long)x) / sizeof(double)
 
-    // solo para debuguear, despues se eliminan estas dos lineas
-/*
-    ColumnValue xDebugOrdenado[12]; for(int i = 0; i < 12; i++) { xDebugOrdenado[i].nValue = *pValues[i]; xDebugOrdenado[i].nColumn = ((long)pValues[i] - (long)x) / sizeof(double); }
-    double xDebugOriginal[20]; for(int i = 0; i < 20; i++) { xDebugOriginal[i] = x[i]; }
-*/
-
     // corte por clique:
-//    corteClique     (env, cbdata, wherefrom, x, pValues, nValuesLowerTo1);
-    corteCicloImpar (env, cbdata, wherefrom, x, pValues, nValuesLowerTo1);
+    if(g_bUseCliqueCuts)
+        corteClique     (env, cbdata, wherefrom, cbhandle, x, pValues, nValuesLowerTo1);
+    if(g_bUseOddCycleCuts)
+        corteCicloImpar (env, cbdata, wherefrom, cbhandle, x, pValues, nValuesLowerTo1);
 
     delete [] pValues;
     delete [] x;
@@ -467,10 +468,13 @@ void buildGraphFromCol(const char* colFileName)
             fscanf(finput, "%d %d\n", &node1, &node2);
             --node1;
             --node2;
-            g_vvbGraphTable[node1][node2] = true;
-            g_vvbGraphTable[node2][node1] = true;
-            g_vvEGraphAdjList[node1].push_back( Edge(node1, node2) );
-            g_vvEGraphAdjList[node2].push_back( Edge(node2, node1) );
+            if( !g_vvbGraphTable[node1][node2] && !g_vvbGraphTable[node2][node1] )
+            {
+                g_vvbGraphTable[node1][node2] = true;
+                g_vvbGraphTable[node2][node1] = true;
+                g_vvEGraphAdjList[node1].push_back( Edge(node1, node2) );
+                g_vvEGraphAdjList[node2].push_back( Edge(node2, node1) );
+            }
             break;
 
         default:
@@ -513,7 +517,7 @@ int minAvailableColor( Node node, vector< int > coloring, int qtyColorsUsed )
     return minColor + 1;
 }
 
-int heuristicBFSUpperBound()
+int heuristicBFSUpperBound(Node nStartingNode)
 {
     if ( g_nNodes == 0 )
         return 0;
@@ -528,7 +532,7 @@ int heuristicBFSUpperBound()
         pbNonVisitedNodes[i] = false;
 
     // para cada nodo que no haya sido visitado hacemos bfs
-    nNVNode =  getNonVisitedNode(pbNonVisitedNodes);
+    nNVNode =  nStartingNode;
     while (nNVNode != -1)
     {
         lNNodesQueue.push_back(nNVNode);
@@ -672,8 +676,13 @@ int heuristicCliqueLowerBound( int iterations )
 
 void heuristicBounds()
 {
-    g_nHeuristicColorBounds.first = heuristicCliqueLowerBound(LOWER_BOUND_HEURISTIC_MAX_ITERATIONS);
-    g_nHeuristicColorBounds.second = min(heuristicBFSUpperBound(), heuristicSequentialUpperBound());
+    g_nHeuristicColorBounds.first = heuristicCliqueLowerBound(g_nMaxIterationsLowerBoundHeuristic);
+    for( Node nStartingNode = 0;
+              nStartingNode < g_nNodes &&
+              nStartingNode < g_nMaxIterationsUpperBoundHeuristic;
+              nStartingNode++ )
+        g_nHeuristicColorBounds.second = min(heuristicBFSUpperBound(nStartingNode), g_nHeuristicColorBounds.second);
+    g_nHeuristicColorBounds.second = min(heuristicSequentialUpperBound(), g_nHeuristicColorBounds.second);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -701,7 +710,7 @@ void colToLp(const char* colFileName, const char* lpFileName, int coloringLowerB
     char* format = new char[BUFFERSIZE];
     g_nNodes = 0;
     g_nEdges = 0;
-    nColorColumns = coloringUpperBound - coloringLowerBound;
+    g_nColorColumns = coloringUpperBound - coloringLowerBound;
 
     while( (c = getc(finput)) != EOF )
     {
@@ -727,9 +736,9 @@ void colToLp(const char* colFileName, const char* lpFileName, int coloringLowerB
                 coloringUpperBound = g_nNodes;
             // begin building output file
             fprintf(foutput, "Minimize\n obj:");
-            if( nColorColumns > 0 )
+            if( g_nColorColumns > 0 )
                 fprintf(foutput, " w0");
-            for( i = 1; i < nColorColumns; i++ )
+            for( i = 1; i < g_nColorColumns; i++ )
                 fprintf(foutput, " + w%d",i);
 
             fprintf(foutput, "\nSubject To");
@@ -751,11 +760,11 @@ void colToLp(const char* colFileName, const char* lpFileName, int coloringLowerB
             fscanf(finput, "%d %d\n", &node1, &node2);
             node1--;
             node2--;
-            for(int j = 0; j < nColorColumns; j++)
+            for(int j = 0; j < g_nColorColumns; j++)
                 fprintf(foutput, "\n adyDeDistintoColorNodo%dNodo%dColor%d: x%d%d + x%d%d - w%d <= 0",
                           node1, node2, j, node1, j, node2, j, j);
             // no olvidar que tambien hay q agregar las restricciones de los colores que ya estan fijos en 1
-            for(int j = nColorColumns; j < coloringUpperBound; j++)
+            for(int j = g_nColorColumns; j < coloringUpperBound; j++)
                 fprintf(foutput, "\n adyDeDistintoColorNodo%dNodo%dColor%d: x%d%d + x%d%d <= 1",
                           node1, node2, j, node1, j, node2, j, j);
 
@@ -767,7 +776,7 @@ void colToLp(const char* colFileName, const char* lpFileName, int coloringLowerB
     }
 
     fprintf(foutput, "\nBinary\n");
-    for(int j = 0; j < nColorColumns; j++)
+    for(int j = 0; j < g_nColorColumns; j++)
         fprintf(foutput, " w%d\n", j);
 
     for(int i = 0; i < g_nNodes; i++)
@@ -780,7 +789,7 @@ void colToLp(const char* colFileName, const char* lpFileName, int coloringLowerB
     fclose(finput);
 }
 
-int solveProblem(string sFileName, SolvingParameters parameters = NO_PARAMETERS)
+int solveProblem(string sFileName)
 {
     int status = 0;
     double init,end;
@@ -789,7 +798,6 @@ int solveProblem(string sFileName, SolvingParameters parameters = NO_PARAMETERS)
 
     CPXENVptr env = NULL;
     CPXLPptr  lp = NULL;
-    machineEps = 0.000001;
 
     //Inicializamos el entorno
     env = CPXopenCPLEX (&status);
@@ -798,6 +806,20 @@ int solveProblem(string sFileName, SolvingParameters parameters = NO_PARAMETERS)
         printf("Problemas al abrir en entorno\n");
         goto TERMINATE;
     }
+
+    g_bUseInitialHeuristics = true;
+    g_bUseCPLEXCuts = true;
+    g_bUseUserCuts = true;
+    g_bUseOddCycleCuts = true;
+    g_bUseCliqueCuts = true;
+    g_nMaxIterationsLowerBoundHeuristic = 3;
+    g_nMaxIterationsUpperBoundHeuristic = 3;
+    g_nMaxOddCycleCutIterations = 1;
+    g_nMaxOddCycleCutVerify = 10;
+    g_nNodes = 0;
+    g_nEdges = 0;
+    g_nColorColumns = 0;
+    g_nColumns = 0;
 
     ////Parametros para que no preprocese
     CPXsetintparam (env, CPX_PARAM_REDUCE,CPX_OFF);
@@ -810,13 +832,18 @@ int solveProblem(string sFileName, SolvingParameters parameters = NO_PARAMETERS)
     CPXsetintparam(env,CPX_PARAM_CUTPASS,10);             //Number of cutting plane passes
     CPXsetdblparam(env,CPX_PARAM_CUTSFACTOR,6.0);         //Row multiplier factor for cuts
 */
-//    CPXsetintparam(env,CPX_PARAM_DISJCUTS,2);
-//    CPXsetintparam(env,CPX_PARAM_FLOWCOVERS,2);
-//    CPXsetintparam(env,CPX_PARAM_FLOWPATHS,2);
-//    CPXsetintparam(env,CPX_PARAM_FRACCUTS,2);
-//    CPXsetintparam(env,CPX_PARAM_GUBCOVERS,2);
-//    CPXsetintparam(env,CPX_PARAM_IMPLBD,2);
-//    CPXsetintparam(env,CPX_PARAM_CLIQUES,2);
+
+    if(!g_bUseCPLEXCuts)
+    {
+        CPXsetintparam(env,CPX_PARAM_DISJCUTS,-1);
+        CPXsetintparam(env,CPX_PARAM_FLOWCOVERS,-1);
+        CPXsetintparam(env,CPX_PARAM_FLOWPATHS,-1);
+        CPXsetintparam(env,CPX_PARAM_FRACCUTS,-1);
+        CPXsetintparam(env,CPX_PARAM_GUBCOVERS,-1);
+        CPXsetintparam(env,CPX_PARAM_IMPLBD,-1);
+        CPXsetintparam(env,CPX_PARAM_CLIQUES,-1);
+        CPXsetintparam(env, CPX_PARAM_ZEROHALFCUTS, -1);
+    }
 
     //Parametros para salida por pantalla
     CPXsetintparam (env, CPX_PARAM_SCRIND, CPX_ON);      //para mostrar las iteraciones
@@ -828,14 +855,9 @@ int solveProblem(string sFileName, SolvingParameters parameters = NO_PARAMETERS)
     CPXsetintparam (env, CPX_PARAM_BRDIR, CPX_BRDIR_AUTO);            //CPX_BRDIR_DOWN o CPX_BRDIR_AUTO  o CPX_BRDIR_UP
     CPXsetintparam (env, CPX_PARAM_LBHEUR, CPX_ON);                 //local branching heuristic OFF(default)
     CPXsetintparam (env, CPX_PARAM_STRONGITLIM, 5);                 //MIP strong branching iterations limit 0(auto) o positivo
-    CPXsetintparam (env, CPX_PARAM_ZEROHALFCUTS, 1);                // MIP zero-half cuts -1 0(auto) 1 2(agresivo)
     CPXsetintparam (env, CPX_PARAM_VARSEL, CPX_VARSEL_DEFAULT);     //variable selection, menos inviable, mas inviable
     CPXsetintparam (env, CPX_PARAM_NODESEL, CPX_NODESEL_BESTEST); //node selection strategy, BESTBOUND(default), DFS, BESTEST
 */
-
-    CUTINFO cutinfo;
-    cutinfo.nColumns = 0;
-    cutinfo.lp = 0;
 
     lp = CPXcreateprob (env, &status, "pp.lp");
     if ( lp == NULL )
@@ -848,7 +870,7 @@ int solveProblem(string sFileName, SolvingParameters parameters = NO_PARAMETERS)
     CPXgettime(env,&init);
     buildGraphFromCol(sFileName.c_str());
     g_nHeuristicColorBounds = pair<int, int>( 0, g_nNodes );
-    if (parameters & CHROMATIC_NUMBER_BOUND_HEURISTICS)
+    if (g_bUseInitialHeuristics)
     {
         heuristicBounds();
         printf( "Heuristicas: cota inf = %i, cota sup = %i \n",
@@ -856,7 +878,7 @@ int solveProblem(string sFileName, SolvingParameters parameters = NO_PARAMETERS)
                 g_nHeuristicColorBounds.second );
     }
 
-    nColorColumns = g_nHeuristicColorBounds.second - g_nHeuristicColorBounds.first;
+    g_nColorColumns = g_nHeuristicColorBounds.second - g_nHeuristicColorBounds.first;
 
     //si la extension no es .lp suponemos que es un archivo con formato .col
     extensionOffset = sFileName.find_last_of(".");
@@ -878,15 +900,17 @@ int solveProblem(string sFileName, SolvingParameters parameters = NO_PARAMETERS)
 
     // inicializacion de info de cortes
     numcols = CPXgetnumcols (env, lp);
-    cutinfo.lp = lp;
-    cutinfo.nColumns = numcols;
+    g_nColumns = numcols;
 
-    // asignamos la heuristica de separacion al problema
-    status = CPXsetcutcallbackfunc (env, cortes, &cutinfo);
-    if ( status )
+    if(g_bUseUserCuts)
     {
-        printf("Problemas al setear rutina de separacion - %d.\n", status);
-        goto TERMINATE;
+        // asignamos la heuristica de separacion al problema
+        status = CPXsetcutcallbackfunc (env, cortes, NULL);
+        if ( status )
+        {
+            printf("Problemas al setear rutina de separacion - %d.\n", status);
+            goto TERMINATE;
+        }
     }
 
     status = CPXmipopt (env, lp);
@@ -919,7 +943,7 @@ int solveProblem(string sFileName, SolvingParameters parameters = NO_PARAMETERS)
         // al valor del objetivo hay que sumarle el lowerBound de las heuristicas
         // de preprocesamiento, ya que le fijamos las variables de los colores
         // correspondientes a los que van de lowerBound a upperBound
-	    printf("\Coloreo: %lf\n", objval + g_nHeuristicColorBounds.first);
+	    printf("Coloreo: %lf\n", objval + g_nHeuristicColorBounds.first);
 	    printf("Nodos: %d\n", nodos);
         printf("Tiempo: %lf\n", end-init);
 	    //printf("\nSolucion:\n");
@@ -931,7 +955,7 @@ int solveProblem(string sFileName, SolvingParameters parameters = NO_PARAMETERS)
     if ( lp != NULL ) {
         status = CPXfreeprob (env, &lp);
         if ( status )
-            fprintf (stderr, "CPXfreeprob %d.\n",status);
+            printf ("CPXfreeprob %d.\n",status);
     }
     if ( env != NULL ) {
         status = CPXcloseCPLEX (&env);
@@ -944,11 +968,12 @@ int solveProblem(string sFileName, SolvingParameters parameters = NO_PARAMETERS)
 
 int main(int argc, char *argv[])
 {
-    string fileInput;
-    if( argv[1] != 0 )
-        fileInput = argv[1];
-    else
-        fileInput = "Coloreo.col";
+    string sFileInput;
 
-    return solveProblem(fileInput, NO_PARAMETERS);
+    if( argv[1] != 0 )
+        sFileInput = argv[1];
+    else
+        sFileInput = "test50-80.col";
+
+    return solveProblem(sFileInput);
 }
