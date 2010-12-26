@@ -1,8 +1,8 @@
 \section{Ejercicio 1}
 
-El objetivo de este ejercicio consiste en poner a prueba el problema de coloreo, variando algunos de los parámetros que $Cplex$ utiliza para resolver el problema. Los mismos son parámetros genéricos que forman parte del comportamiento que tiene $Cplex$ para computar la solución.
+El objetivo de este ejercicio consiste en poner a prueba el problema de coloreo, variando algunos de los parámetros que $CPLEX$ utiliza para resolver el problema. Los mismos son parámetros genéricos que forman parte del comportamiento que tiene $CPLEX$ para computar la solución.
 
-En este caso en particular, se tomaron parámetros que se utilizan en el método de Branch and Bound. La prueba entonces, consiste en modificar los valores de dichos parámetros y observar como es el desempeño del proceso, en tiempo requerido y en cantidad de nodos creados por $Cplex$, hasta obtener la solución del problema.
+En este caso en particular, se tomaron parámetros que se utilizan en el método de Branch and Bound. La prueba entonces, consiste en modificar los valores de dichos parámetros y observar como es el desempeño del proceso, en tiempo requerido y en cantidad de nodos creados por $CPLEX$, hasta obtener la solución del problema.
 
 Los parámetros elegidos son los siguientes:
 
@@ -12,7 +12,7 @@ Los parámetros elegidos son los siguientes:
    \begin{itemize}
    \item CPX\_BRDIR\_UP, que indica que el branching siempre debe hacerse por la parte superior.
    \item CPX\_BRDIR\_DOWN, que indica que el branching debe hacerse por la parte inferior.
-   \item CPX\_BRDIR\_AUTO, que indica que $Cplex$ decidirá que camino tomar.
+   \item CPX\_BRDIR\_AUTO, que indica que $CPLEX$ decidirá que camino tomar.
    \end{itemize}
 
 \item \textbf{CPX\_PARAM\_LBHEUR:} Indica si las heurísticas locales en cada branching están o no activadas. Los valores para el mismo son: CPX\_ON y CPX\_OFF.
@@ -35,29 +35,28 @@ Los parámetros elegidos son los siguientes:
 
 \item \textbf{CPX\_PARAM\_STRONGITLIM:} Indica el límite de iteraciones a realizar en cada una de las variables candidatas para realizar el branching. Los valores que puede tomar son: 0, automático o un número positivo, que indica las iteraciones fijas a realizar.
 
-\item \textbf{CPX\_PARAM\_ZEROHALFCUTS:} Aquí se indica si se harán o no cortes de tipo parte entera hacia abajo para los valores de algunas de las restricciones. Los posibles valores son: -1, desactivado, 0 automático, 1 normal y 2 agresivo.
+\item \textbf{CPX\_PARAM\_ZEROHALFCUTS:} Aquí se indica si se harán o no cortes de tipo parte entera hacia abajo para los valores del lado derecho de las restricciones. Los posibles valores son: -1, desactivado, 0 automático, 1 normal y 2 agresivo.
 \end{enumerate}
 
 \subsection{Pruebas realizadas}
 
-En lo que sigue de la sección actual, se mostrarán los resultados de varias rondas de tests,las cuales involucran la combinación de diferentes parámetros de $Cplex$. Además, se irá contando cuales fueron los problemas encontrados en cada una de las rondas y como se fueron seleccionando los mejores valores de los parámetros, para realizar las pruebas finales.
+En lo que sigue de la sección actual, se mostrarán los resultados de varias rondas de tests,las cuales involucran la combinación de diferentes parámetros de $CPLEX$. Además, se irá contando cuales fueron los problemas encontrados en cada una de las rondas y como se fueron seleccionando los mejores valores de los parámetros, para realizar las pruebas finales.
 
-La configuración global de $Cplex$, además de los parámetros descriptos, se modifico, de manera de analizar solo el comportamiento del método branch and bound. Para esto, se deshabilitaron algunas características que vienen configuradas por defecto. Las heuristicas de preproceso de la información y de reducción variables fueron deshabilitadas, para esto se setearon los parámetros $CPX\_PARAM\_REDUCE$ y $CPX\_PARAM\_MIPCBREDLP$ en $off$ y el parámetro $CPX\_PARAM\_PRELINEAR$ en cero.
+Además de los parámetros descriptos, se modificó la configuración global de $CPLEX$ para analizar solo el comportamiento del método branch and bound. Para esto, se deshabilitaron algunas características que vienen configuradas por defecto. Las heurísticas de preproceso de la información y de reducción variables fueron deshabilitadas, para esto se setearon los parámetros $CPX\_PARAM\_REDUCE$ y $CPX\_PARAM\_MIPCBREDLP$ en $off$ y el parámetro $CPX\_PARAM\_PRELINEAR$ en cero.
 
 Además de esta configuración, se desactivaron todos los métodos que realizan cortes en el problema. Para esto entonces, se setearon los parámetros $CPX\_PARAM\_CUTPASS$ en -1 y $CPX\_PARAM\_CUTSFACTOR$ en cero.
 
-Es cierto que con lo anteriormente realizado, la performace, a la hora de resolver los problemas va a disminuir, pero el fin de hacer esto, es para evaluar, en lo posible el comportamiento lo mas aislado posible del método branch and bound.
+Es cierto que con lo anteriormente realizado la performace disminuye a la hora de resolver los problemas, pero su fin es evaluar el comportamiento del método branch and bound exclusivamente.
 
-Como a la hora de realizar los tests y ver su eficacia en cuanto a tiempo consumido antes de alcanzar la solución optima, se deshabilitó (con el fin de optimizar los cálculos) una opción de $Cplex$ que muestra los valores actuales en cada una de las iteraciones.
-
-\subsubsection{Ronda Número 1}
-
-La primer ronda, consistió en realizar tests combinando los parámetros 1, 2, 5 y 6, con lo que se obtuvo veinticuatro tipos distintos de tests. Los mismos recibían como parámetros grafos de 3 a 13 nodos, con una densidad de $70\%$. El motivo por el cual, el tamaño de los grafos de prueba es relativamente pequeño, es por que, con grafos de 14 o más nodos, la PC en la que se realizaban todas las pruebas, no podía resolver dichos problemas, dado que la cantidad de memoria de la que disponía no alcanzaba, y por este motivo $Cplex$, devolvía un error que informaba dicho problema.
+Por último, se deshabilitó la salida por consola de los resultados de las iteraciones para disminuír los tiempos de ejecución.
 
 La pc en la que se realizaron todas las pruebas es un $Athlon$ $64$ $3000+$ con $1.80Ghz$ de velocidad de procesador, un solo núcleo y con $1GB$ de memoria Ram $DDR2$ de $800Mhz$.
 
+\subsubsection{Ronda Número 1}
 
-Como se comentó anteriormente, se crearon 24 (venticuatro) tipos de tests distintos, los cuales se corresponden con alguna combinación en los valores de los parámetros mencionados. A continuación se hará una descripción de cada uno de los tipos de tests:
+La primer ronda consistió en realizar tests combinando los parámetros 1, 2, 5 y 6, con lo que se obtuvo $24$ tipos distintos de tests. Los mismos recibían como parámetros grafos de 3 a 13 nodos, con una densidad de $70\%$ de aristas. La relativamente poca cantidad de nodos se debe a que la PC en la que se realizaban todas las pruebas no podía resolver coloreo con grafos de 14 o más nodos, dado que la cantidad de memoria de la que disponía no alcanzaba, y por este motivo $CPLEX$ devolvía un error que informaba dicho problema.
+
+A continuación se hará una descripción de cada uno de los 24 (venticuatro) tipos de tests:
 
 \begin{enumerate}
 
@@ -255,7 +254,7 @@ CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_MAXINFEAS *\\
 
 \end{enumerate}
 
-A continuación se mostrarán los gráficos de tiempo, para cada uno de los tipos de tests, y para cada uno de los grafos de 3 a 13 nodos, con $70\%$ de densidad. El primer grafico, si bien no deja que se observe la información de cada uno de los tests claramente, sirve para ver como es que aumenta el tiempo de procesamiento a medida que aumenta la canridad de nodos en el grafo. Como se puede observar en cada valor del eje horizontal X, si bien cada uno de los valores de cada grupo de resultados varía entre los demás del mismo grupo, podemos observar que el patron es similar, el aumento del tiempo de procesamiento se torna exponencial a medida que aumenta la cantidad de nodos del grafo:
+A continuación se mostrarán los gráficos de tiempo para cada uno de los tipos de tests, y para cada uno de los grafos de 3 a 13 nodos, con $70\%$ de densidad. El primer gráfico, si bien no deja que se observe la información de cada uno de los tests, nos sirve para ver cómo es que el aumento del tiempo es directamente proporcional a la cantidad de nodos en el grafo. Como se puede observar en cada valor del eje horizontal X, si bien cada uno de los valores de cada grupo de resultados varía entre los demás del mismo grupo, podemos observar que el patrón es similar, el aumento del tiempo de procesamiento se torna exponencial a medida que aumenta la cantidad de nodos del grafo:
 
 \begin{figure}[H]
 \centering
@@ -263,21 +262,19 @@ A continuación se mostrarán los gráficos de tiempo, para cada uno de los tipos d
 \caption{Vista de la complejidad exponencial}
 \end{figure}
 
-Como se puede observar, además de que los tiempos se tornan exponenciales, también resultan ser muy altos para este problema. Si se tiene en cuenta que los grafos que se usaron en los tests, no son muy grandes. Como se puede observar en la figura anterior, para un grafo de 13 nodos, con 70\% de densidad, los tests estan tardando entre 1200 y 3000 segundos aproximadamente (es decir entre 20 y 50 minutos) en resolver el problema de coloreo para dicho grafo en particular. Por esta razón se llegó a la conclusión de que es necesario realizar algún cambio para disminuir los tiempos de respuesta.
+Como se puede observar, además de que los tiempos se tornan exponenciales, también resultan ser muy altos para este problema si se tiene en cuenta que los grafos que se usaron en los tests son pequeños. Como se puede observar en la figura anterior, para un grafo de 13 nodos, con 70\% de densidad, los tests estan tardando entre 1200 y 3000 segundos aproximadamente (es decir entre 20 y 50 minutos) en resolver el problema de coloreo para dicho grafo en particular. Por esta razón se llegó a la conclusión de que es necesario realizar algún cambio para disminuír los tiempos de respuesta.
 
-Luego de algunas pruebas aisladas, se pudo observar que uno de los factores que hacían que los tiempos sean tan altos, era el método para seleccionar la variable para realizar el branching.
+Luego de algunas pruebas aisladas, se pudo observar que uno de los factores que hacían que los tiempos sean tan altos era el método para seleccionar la variable para realizar el branching.
 
-El control de dicha metodología se setea mediante el parámetro de configuración $CPX\_PARAM\_VARSEL$ y las pruebas realizadas tuvieron solo dos posibles valores en todos los test descriptos anteriormente. Uno selecciona la variable con la mínima infactibilidad y realiza el branching con dicha variable, y el otro selecciona la variable, con la mayor factibilidad. En las pruebas aisladas se probó con la selección automática de las variables en cada paso, es decir, dejando que $Cplex$ eligiera que variable convenía, de acuerdo a su metodología, para realizar el branching y se llegó a mejores resultados.
+El control de dicha metodología se setea mediante el parámetro de configuración $CPX\_PARAM\_VARSEL$ y las pruebas realizadas tuvieron solo dos posibles valores en todos los test descriptos anteriormente. Uno selecciona la variable con la mínima infactibilidad y realiza el branching con dicha variable, y el otro selecciona la variable con la mayor factibilidad. En las pruebas aisladas se probó que se puede llegar a mejores resultados seteando la selección de las variables para realizar el branching en modo automático, es decir, dejando que $CPLEX$ eligiera que variable convenía de acuerdo a su metodología.
 
 En esto entonces se basan los tests realizados por la ronda número dos, que se explicarán en la siguiente sección.
 
-
-
 \subsubsection{Ronda Número 2}
 
-Como se mencionó en la sección anterior, en esta ronda se realizaron tests seteando el parámetro $CPX\_PARAM\_VARSEL$ en automático, de forma que $Cplex$ seleccionara la variable que mejor el convenga para realizar el branching. De esta forma la cantidad de tipos de tests a realizar disminuyó a doce (12), ya que ahora, hay una variable menos para combinar.
+En esta ronda se realizaron tests seteando el parámetro $CPX\_PARAM\_VARSEL$ en automático, de forma que $CPLEX$ seleccionará la variable que mejor le convenga para realizar el branching. De esta forma la cantidad de tipos de tests a realizar disminuyó a 12 (doce).
 
-A continuación se describen cada uno de los tipos tests, como se hizo en la sección anterior, pero ahora con los valores utilizados en esta ronda:
+A continuación se describen cada uno de los tipos tests, como se hizo en la sección anterior, para los valores utilizados en esta ronda:
 
 \begin{enumerate}
 \item Tipo1:
@@ -378,15 +375,15 @@ CPX\_PARAM\_VARSEL $\to$ CPX\_VARSEL\_DEFAULT\\
 
 \end{enumerate}
 
-El resultado de estos tests los veremos en el siguiente gráfico, donde se pueden observar que los tiempos requeridos para resolver los problemas, son significativamente menores, aunque siguen siendo relativamente altos, con la combinación actual de parámetros para el grafo de mayor cantidad de nodos, los tiempos rondan entre los 200 y 750 segundos (osea entre 3 y 13 minutos aproximadamente). En la siguiente imagen, se muestran los tiempos hasta grafos de 12 nodos.
+El resultado de estos tests los veremos en el siguiente gráfico, donde se puede observar que los tiempos requeridos para resolver los problemas son significativamente menores, aunque siguen siendo relativamente altos. Con la combinación actual de parámetros, para el grafo de mayor cantidad de nodos los tiempos rondan entre los 200 y 750 segundos (osea entre 3 y 13 minutos aproximadamente). En la siguiente imagen, se muestran los tiempos para grafos de hasta 12 nodos.
 
-\begin{figure}[H]
-\centering
-\includegraphics[scale=0.75]{../tests/resultados/resultados2/tiempos3-12-nodos.png}
-\caption{Vista de la complejidad exponencial hasta gafos de 12 nodos}
-\end{figure}
+%\begin{figure}[H]
+%\centering
+%\includegraphics[scale=0.75]{../tests/resultados/resultados2/tiempos3-12-nodos.png}
+%\caption{Vista de la complejidad exponencial hasta gafos de 12 nodos}
+%\end{figure}
 
-Como se puede observar, los tipos 7, 8 y 9 en general son los que menos tiempo requieren para resolver el problema. Aunque cuando se llega a resolver grafos con 13 nodos, no es tan así, pero de todas formas siguen estando relativamente bien en tiempo. Con esto se puede pensar que dichas combinaciones son las mejores entre todas las que se testearon, aunque esto no se pude tomar como totalmente cierto, en las rondas de tests se tomará alguno de los tipos que se tienen actualmente para realizar otros tests. Como la idea es que la cantidad de tipos de test no sean muy grandes, se tomará la mejor combinación de valores, que se elegirá de acuerdo a los resultados que se obtengan. Por este motivo, al ver los resultados actuales, pareciera ser que los tipos 7, 8 y 9 son los mejores en general. A continuación se muestra el gráfico global de los tests para cada tipo, de grafos de 3 nodos a grafos de 13 nodos:
+%Como se puede observar, los tipos 7, 8 y 9 en general son los que menos tiempo requieren para resolver el problema. Con esto se puede pensar que dichas combinaciones son las mejores entre todas las que se testearon, aunque esto no se pude tomar como totalmente cierto, en las rondas de tests se tomará alguno de los tipos que se tienen actualmente para realizar otros tests. Como la idea es que la cantidad de tipos de test no sea muy grande, se tomará la mejor combinación de valores, que se elegirá de acuerdo a los resultados que se obtengan. Por este motivo, al ver los resultados actuales, pareciera ser que los tipos 7, 8 y 9 son los mejores en general. A continuación se muestra el gráfico global de los tests para cada tipo, de grafos de 3 nodos a grafos de 13 nodos:
 
 \begin{figure}[H]
 \centering
@@ -394,7 +391,7 @@ Como se puede observar, los tipos 7, 8 y 9 en general son los que menos tiempo r
 \caption{Vista de la complejidad exponencial hasta gafos de 13 nodos}
 \end{figure}
 
-Para observar mas detalladamente que pasa cuando se recibe un grafo de 13 nodos, se hará un zoom al grafico anterior, que mostrará solo los tiempos de cada uno de los tipos de tests para dicho grafo, y aqui se puede observar mejor que los tipos 7, 8 y 9 son los que en general funcionan mas rápido:
+Para observar más detalladamente qué ocurre cuando se recibe un grafo de 13 nodos, se hará un zoom al gráfico anterior, que mostrará solamente los tiempos de cada uno de los tipos de tests para dicho grafo.
 
 \begin{figure}[H]
 \centering
@@ -402,17 +399,19 @@ Para observar mas detalladamente que pasa cuando se recibe un grafo de 13 nodos,
 \caption{Vista de la complejidad exponencial hasta gafos de 12 nodos}
 \end{figure}
 
-Algo que se mencionó en el comienzo de la sección principal, es que los tests que se realizaron hasta el momento, se hicieron desactivando algunas características que vienen seteadas por defecto en $Cplex$. Este es uno de los motivos por los cuales los tiempos de resolución de los problemas son tan altos, pero otro de los motivos es que, hasta el momento no se utilizaron ningún tipo de heurística inicial, que permita acotar de una mejor forma el valor objetivo que se busca.
+Se observa entonces que los tests 7, 8 y 9 tuvieron una mejor performance con respecto a los demás.
 
-Como el tamaño de los grafos que se utilizaron de prueba, resultaron ser bastante pequeños, se decidió generar heurísticas que permitan acotar lo mejor que se pueda la cantidad de colores de la solución de manera de simplificar el problema y evitar calculos innecesarios. Con esto, se espera que se puedan resolver problemas mas grandes que grafos de 13 nodos.
+Algo que se mencionó en el comienzo de la sección principal es que los tests que se realizaron hasta el momento se hicieron desactivando algunas características que vienen seteadas por defecto en $CPLEX$, como los cortes. Este es uno de los motivos por los cuales los tiempos de resolución de los problemas son tan altos, pero por otro lado, hasta el momento no se utilizó ningún tipo de heurística inicial que permita reducir el problema y acotar los valores de la función objetivo.
 
-En la siguiente ronda de tests. se incluirán algunas heurísticas iniciales para realizar dicha acotación, tanto superiormente como inferiormente.
+Como los grafos que se utilizaron de prueba son bastante pequeños, y dado que las heurísticas iniciales de reducción del problema de $CPLEX$ tienen un comportamiento impredecible, se decidió implementar heurísticas que permitan acotar la cantidad de colores de la solución de manera que se puedan utilizar en los experimentos posteriores y que sirvan para simplificar el problema, evitar cálculos innecesarios y por ende mejorar la performance del sistema.
+
+En la siguiente ronda de tests se incluirán algunas heurísticas iniciales para realizar dicha acotación, tanto superiormente como inferiormente.
 
 \subsubsection{Ronda número 3}
 
-En esta ronda de pruebas, se agregan tres heurísticas iniciales, para ayudar a $Cplex$ a resolver el problema de forma más rapida, dado que las mismas, sirven para acortar el rango de soluciones posibles, tanto inferiormente como superiormente. Las mismas se detallan en la sección heurísticas iniciales.
+En esta ronda de pruebas se agregan tres heurísticas iniciales para ayudar a $CPLEX$ a resolver el problema de forma más rapida, dado que las mismas sirven para acortar el rango de valores de la función objetivo, tanto inferiormente como superiormente. Las mismas se detallan en la sección ``Heurísticas Iniciales''.
 
-Realizando las pruebas nuevamente, con los mismos tipos que la ronda número 2, pero ahora usando las heurísticas iniciales de cota inferior y superior, se notó una mejora abismal, ya que los tiempos disminuyeron significativamente. A continuación se muestra el gráfico con los tiempos requeridos para cada uno de los tipos de test, con grafos de 3 a 13 nodos y 70\% de densidad:
+Realizando las pruebas nuevamente con los mismos tipos que la ronda número 2, pero ahora usando las heurísticas iniciales de cota inferior y superior, se notó una notable mejora de tiempos. A continuación se muestra el gráfico con los tiempos requeridos para cada uno de los tipos de test, con grafos de 3 a 13 nodos y 70\% de densidad:
 
 \begin{figure}[H]
 \centering
@@ -420,15 +419,15 @@ Realizando las pruebas nuevamente, con los mismos tipos que la ronda número 2, p
 \caption{Vista de los tiempos}
 \end{figure}
 
-Como se puede observar, los tiempos, como se había mencionado, son mucho mas cortos, y los mismos son bastante menores a un segundo, para todos los grafos de prueba, y para todos los tipos de combinación de parámetros.  Esto deja ver que las heurísticas iniciales son una herramienta muy importante a la hora preparar una solución para el problema, donde se tratan de buscar, las que sean lo mas baratas en costo de ejecución y lo mas eficiente a la hora de acotar el problema.
+Como se puede observar, los tiempos son mucho mas cortos y menores a un segundo, para todos los grafos de prueba, y para todos los tipos de combinación de parámetros.  Esto deja ver que las heurísticas iniciales son una herramienta muy importante a la hora preparar una solución para el problema, donde se tratan de buscar las que sean lo más baratas en costo de ejecución y lo más eficiente acotando el problema.
 
-Algo mas a observar, es la prevalencia de los tiempos de los tipos 7, 8 y 9, que se destacan entre los tipos de combinación de parámetros, con los primeros puestos en cuanto a tiempo de ejecución.
+Algo más a observar es la prevalencia de los tiempos de los tipos 7, 8 y 9, que se destacan entre los tipos de combinación de parámetros, con los primeros puestos en cuanto a tiempo de ejecución.
 
 \subsubsection{Ronda número 4}
 
-En esta ronda lo que se planeó hacer es fijar los parámetros que se estuvieron usando para los demás rondas de tests, en particular, elegir alguna combinación de ellos (algún tipo de combinación). Anteriormente, se mencionó que los tipos 7, 8 y 9 eran los que se veían como mejores, dado el tiempo de respuesta a la hora de resolver el problema. Como, se quiere evitar que la cantidad de combinaciones en esta ronda sea muy grande, se elegirá alguno de los tipos mencionados, en base a un criterio al azar, basado en los resultados obtenidos. Como ambos tres tipos son bastante parejos, con tomar como referencia alguno de ellos, alcanza. Para esta ronda entonces, selecciona el tipo 7.
+En esta ronda lo que se planeó hacer es fijar los parámetros que se estuvieron usando para los demás rondas de tests, en particular, elegir alguna combinación de ellos (algún tipo de combinación). Anteriormente, se mencionó que los tipos 7, 8 y 9 eran los que se veían como mejores, dado el tiempo de respuesta a la hora de resolver el problema. Para que la cantidad de tests no crezca exponencialmente, tomaremos el tipo 7 como ejemplo para los siguientes experimentos.
 
-Las combinaciones que siguen, son en base a nuevos parámetros, con los demás seteados según el tipo 7. Los nuevos parámetros a combinar, tienen que ver con las formas de elegir el nodo($CPX\_PARAM\_NODESEL$, la cual se tomarán los parámetros que hacen pensar que que pueden generar resultados mas interesantes), para seguir con el árbol de branching y con las heurísticas locales dentro de cada branching($CPX\_PARAM\_LBHEUR$). Como se supone que los resultados del primer parámetro puede variar de acuerdo a si hay o no heurísticas locales, parece ser interesante ver que pasa con esta combinación de parámetros.
+Las combinaciones que siguen son en base a nuevos parámetros, con los demás seteados según el tipo 7. Los nuevos parámetros a combinar tienen que ver con las formas de elegir el nodo ($CPX\_PARAM\_NODESEL$), para seguir con el árbol de branching y con las heurísticas locales dentro de cada branching ($CPX\_PARAM\_LBHEUR$). Como se supone que los resultados del primer parámetro puede variar de acuerdo a si hay o no heurísticas locales, parece ser interesante ver que pasa con esta combinación de parámetros.
 
 Los tipos de combinación se detallan a continuación:
 
@@ -465,9 +464,9 @@ CPX\_PARAM\_LBHEUR $\to$ CPX\_ON\\
 
 \end{enumerate}
 
-Las pruebas se realizaron con grafos de 25 a 50 nodos, con un 70\% de densidad. En el gráfico de tiempos que sigue se puede observar que los tiempos son bastante buenos. Pero también hay que decir que si bien, las estrategias elegidas para correr estas pruebas resultaron ser buenas para las instancias de prueba graficadas, para la instancia de 25 nodos, resultó ser muy mala, ya que los tiempos para resolver el problema, eran muy altos, casi al mismo nivel de los tiempos de la ronda 1 para los grafos de 13 nodos. Con esto se puede deducir que las estrategias elegidas pueden resultar muy buenas o muy malas, dependiendo de la instancia en la que la pruebe.
+Las pruebas se realizaron con grafos de 25 a 50 nodos, con un 70\% de densidad. En el gráfico de tiempos que sigue se puede observar que los tiempos son bastante buenos. Pero también se puede decir que si bien las estrategias elegidas para correr estas pruebas resultaron ser buenas para estas instancias de prueba, para 25 nodos resultó ser muy mala, ya que los tiempos para resolver el problema eran muy altos, casi al mismo nivel de los tiempos de la ronda 1 para los grafos de 13 nodos. Con esto se puede deducir que las estrategias elegidas pueden resultar muy buenas o muy malas, dependiendo de la instancia en la que la pruebe.
 
-Por el motivo mencionado anteriormente, se decidió no graficar los tiempos para la instancia de 25 nodos, ya que representa un outlier dentro de la ronda, y hace que los demás tiempos no se puedan observar correctamente.
+Por el motivo mencionado anteriormente, se decidió no graficar los tiempos para la instancia de 25 nodos, ya que representa un outlier dentro de la ronda y no aporta ningún tipo de información adicional.
 
 \begin{figure}[H]
 \centering
@@ -475,13 +474,13 @@ Por el motivo mencionado anteriormente, se decidió no graficar los tiempos para 
 \caption{Vista de los tiempos}
 \end{figure}
 
-Al contrario de lo que se pensaba antes de realizar las pruebas, se nota que los tiempos de ejecución son muy similares entre los diferentes tipos de parámetros. Esto indica que el hecho de tener o no heurísticas locales en cada branching, no varía mucho los resultados. Aunque si se observa bien, los tipos 1, 3 y 5, que tienen las heurísticas locales desactivadas, en las ultimas tres instancias, tardan un poquito mas que los tipos con las heurísticas activadas.
+Se puede notar que los tiempos de ejecución son muy similares entre los diferentes tipos de parámetros. Esto indica que el hecho de tener o no heurísticas locales en cada branching no varía mucho los resultados para estos tests en particular, aunque si se observa bien, los tipos 1, 3 y 5, que tienen las heurísticas locales desactivadas, en las ultimas tres instancias tardan un poquito más que los tipos con las heurísticas activadas.
 
-Con respecto a la selección del nodo del árbol para realizar el branching, si se toman los tipos 2,4 y 6 que son los que en las pruebas consumen menos tiempos en general, se puede ver que casi no hay diferencia entre una elección u otra, por lo que podemos decir que parece no ser muy importante este parámetro como se creía para este problema.
+Con respecto a la selección del nodo del árbol para realizar el branching, si se toman los tipos 2,4 y 6 que son los que en las pruebas consumen menos tiempos en general, se puede ver que casi no hay diferencia entre una elección u otra, por lo que podemos decir que parece no ser muy importante este parámetro para este problema.
 
-Para esta ronda, además de analizar los tiempos, se analizaron las heurísticas iniciales, que se programaron para obtener cotas superiores e inferiores al problema antes de correr $Cplex$ para la instancia de entrada, de forma tal simplificar el modelo y sacar variables o setear valores fijos a ciertos colores, haciendo que el tiempo disminuya.
+Para esta ronda, además de analizar los tiempos, se analizaron las heurísticas iniciales, que se implementaron para obtener cotas superiores e inferiores al problema antes de correr $CPLEX$ para la instancia de entrada, de forma tal de simplificar el modelo y eliminar filas y columnas de la matriz de restricciones, haciendo que el tiempo disminuya.
 
-A continuación para las instancias de prueba se realizó un gráfico, en el que se ve, la solución óptima de cada una de las instancias (notar que la instancia de 25 nodos fué salteada, de manera que los datos en ese caso deben ignorarse), y cuales son los valores que obtuvieron las heurísticas iniciales, tanto acotando la cantidad de colores superiormente, como inferiormente:
+A continuación para las instancias de prueba se realizó un gráfico en el que se ve, la solución óptima de cada una de las instancias, y cuales son las cotas superior e inferior que obtuvieron las heurísticas iniciales:
 
 \begin{figure}[H]
 \centering
@@ -489,27 +488,45 @@ A continuación para las instancias de prueba se realizó un gráfico, en el que se
 \caption{Vista de los tiempos}
 \end{figure}
 
-Como se puede observar, las cotas funcionaron bastante bien, siendo así que no se encontraron muy distanciadas de la solución óptima. Esto es muy bueno verlo para poder entender por que los tiempos de respuesta son bajos, es por que en general para las instancias probadas, la cantidad de información que $Cplex$ tenía que manejar era bastante mas reducida que la información que puede haber inicialmente sin correr las heurísticas iniciales.
+Como se puede observar las cotas funcionaron bastante bien, siendo así que no se encontraron muy distanciadas de la solución óptima. Esto es muy bueno verlo para poder entender por qué los tiempos de respuesta son bajos: es por que en general para las instancias probadas la cantidad de información que $CPLEX$ tenía que manejar era bastante más reducida que la información que puede haber inicialmente sin correr las heurísticas iniciales.
 
 \section{Heurísticas Iniciales}
 
+Para cada problema se ejecutan heurísticas iniciales que nos acota el valor de la función objetivo. Con estas cotas transformamos el problema en otro con menor cantidad de filas y menor cantidad de columnas comparado con el problema sin las mismas.
+
 \subsection{De Cota Superior}
 
-Para encontrar una cota superior al problema, existen dos heurísticas, que se implementaron para tratar de tener un mejor resultado, ya que una puede ser mala para una instancia y la otra no, o viceversa. Por esta razón, para cada instancia, se llama a estas dos implementaciones, y se queda con el menor valor de ambas.
+Para encontrar una cota superior al valor de la función objetivo del problema existen dos heurísticas, que se implementaron para tratar de tener un mejor resultado, ya que una puede ser mala para una instancia y la otra no, o viceversa. Por esta razón, para cada instancia, se llama a estas dos implementaciones, y se queda con el menor valor de ambas.
 
-La idea de acotar superiormente el problema, sirve para sacar variables al problema original, es decir, si se sabe que el grafo se puede colorear con $X$ colores con una heurística que no es exacta, entonces quiere decir que no es necesario tener dentro del problema variables que sean para describir casos en los que hay mas de $X$ colores utilizados para resolver el problema.
+En el problema original hay tantos posibles colores como nodos del grafo. Al acotarlo superiormente logramos eliminar no solo las columnas $w_j$ correspondientes a los colores, sino también las filas de la matriz de tipo:
 
-Los métodos utilizados para esto son $heuristicBFSUpperBound$ y $heuristicSequentialUpperBound$, que van a ser descriptas a continuación:
+$$x_{p_j} + x_{q_j} \le w_j$$
+
+de modo que no habrá restricciones de este tipo para $j > U$, siendo $U$ el valor de la cota superior.
+
+Los métodos utilizados para esto son $heuristicBFSUpperBound$ y $heuristicSequentialUpperBound$, que se describen a continuación:
 
 \begin{itemize}
-\item $heuristicBFSUpperBound$: Como lo indica su nombre, se recorre el grafo realizando $BFS$ desde algún nodo, y se va coloreando los nodos, teniendo en cuenta sus adyacentes y colores ya usados. Se busca pintarlos siempre con el color mas chico, en cuanto a número de identificador, por ejemplo, si dado un nodo, sus adyacentes se encuentran pintados con los colores 2, 3 y 4, y no hay ninguna pintado con el color 1, entonces se procede a pintar dicho nodo con ese color.
-\item $heuristicSequentialUpperBound$: En esta implementación, lo que se hace es ordenar los nodos de acuerdo a sus grados, y se van recorriendo de mayor a menor, de forma de pintar la mayor cantidad de nodos, en cada paso. En ente algoritmo, se usa la idea de la heurística anterior, y se van pintando los adyacentes de cada uno de los nodos, con el mínimo color disponible, como se comentó anteriormente.
+
+\item $heuristicBFSUpperBound$: Como lo indica su nombre, se recorre el grafo en orden $BFS$ desde algún nodo inicial dado, y se va coloreando los nodos teniendo en cuenta sus adyacentes y los colores ya usados. Se identifica los colores numerándolos y se busca pintarlos siempre con el color más chico. Por ejemplo, dado un nodo si sus adyacentes se encuentran pintados con los colores 2, 3 y 4, y no hay ninguno pintado con el color 1, entonces se procede a pintar dicho nodo con ese color.
+
+\item $heuristicSequentialUpperBound$: Se ordenan los nodos de acuerdo a sus grados, y se van recorriendo de mayor a menor grado. Al igual que la heurística anterior, se identifican los colores numerándolos. Dado un nodo, se lo pinta del menor número disponible, evitando pintarlo del mismo color que alguno de sus vecinos, al igual que la heurística anterior.
 \end{itemize}
 
 \subsection{De Cota Inferior}
 
-Para obtener una cota inferior para el problema, se llama a la heurística $heuristicCliqueLowerBound$ que consiste en buscar una clique para el grafo pasado por parámetros. Encontrando una clique, es posible decir que la cantidad de colores necesarios para pintar el grafo es al menos la cantidad dada por el tamaño de la clique.
+Para obtener una cota inferior para el problema se implementó la heurística $heuristicCliqueLowerBound$ que busca una clique maximal para el grafo del problema. De este modo podemos decir que la cantidad de colores necesarios para pintar el grafo es almenos la cantidad dada por el tamaño de la clique.
 
-De esta manera, la heurística trata de buscar la clique mas grande posible. Lo que se hace es ordenar los nodos de mayor a menor grado, y buscar la clique mas grande que se pueda encontrar a partir de cada nodo, se recorre desde los nodos de mayor grado a menor, ya que, para un nodo de grado alto, puede ser mas probable encontrar alguna clique interesante.
+Se intenta buscar la clique más grande posible. Dado que es más probable encontrar cliques más grandes entre nodos de mayor grado, y para maximizar la eficiencia de la heurística se ejecuta la misma varias veces, cada vez desde distinto nodo inicial en orden de mayor a menor grado y se busca una clique maximal que contenga a este nodo. Los tests anteriores ejecutan la heurística hasta $3 (tres)$ veces. Decidimos mantener este valor dado que los resultados de la heurística con esta cantidad de veces son muy buenos y no notamos una mejoría al aumentarlo.
 
-El algoritmo que se utiliza para tratar de encontrar una clique a partir de un nodo del grafo, es el algortimo $New$ $Best$ $In$ que se puede ver en la referencia.
+Para encontrar la clique maximal se utilizó el algoritmo $New-Best-In$ del paper ``A Simple Clique Camouflaging Against Greedy Maximum Clique Heuristics'' de Stanislav Busygin que se puede ver en la referencia.
+
+\section{Flujo del sistema para el ejercicio 1}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.2]{figuras/flow1.png}
+\caption{Flujo del sistema}
+\end{figure}
+
+Como se puede ver, el sistema genera un archivo auxiliar de extensión $.lp$ (que es el que se le da de entrada a $CPLEX$) a partir de otro archivo de extensión $.col$ que suele ser más simple de generar. El intérprete de archivos $.col$ arma un grafo auxiliar que se mantiene durante toda la ejecución, que sirve para las heurísticas y para experimentos de los ejercicios posteriores.
