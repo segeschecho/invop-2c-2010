@@ -181,7 +181,7 @@ int corteCicloImpar(CPXCENVptr env,
     for (int i = 0; i < g_nNodes; i++)
         pAlreadyStartedFrom[i] = false;
 
-    int nMaxIterations = min( g_nMaxOddCycleCutVerify, nColumns );
+    int nMaxIterations = min( g_nMaxOddCycleCutIterations, nColumns );
     int nMaxCyclesVerification = g_nMaxOddCycleCutVerify;
 
     for( int nStartingNodeIdx = 0; nStartingNodeIdx < nMaxIterations; nStartingNodeIdx++ )
