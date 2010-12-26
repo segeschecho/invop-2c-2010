@@ -128,19 +128,20 @@ Dado que no hay más alternativas, la suposición de que la desigualdad no se cump
 
 \subsection{Heurística de Separación: Clique}
 
-Para realizar esta implementación de un método de separación basado en clique, se realizó un método que es llamado por el procedimiento $cortes$, que es una función que llama $Cplex$, cada vez que va a realizar cortes para el problema, por ende la función $cortes$ es una función callback de $Cplex$.
+Se implementó un callback llamado $cortes$ que se lo setea a $CPLEX$ como heurística de separación. Este callback se ejecuta juesto luego de que $CPLEX$ haya encontrado la solución para un nodo del árbol de branching, y llama a nuestra función de separación por cortes clique, llamada $corteClique$.
 
-El método que realiza el corte se llama $corteClique$ y está incluido en las fuentes del programa que resuelve el problema. La idea es bastante simple, y se procede a realizar la descripción de los pasos a continuación:
+La idea de este método es bastante simple, y se procede a realizar la descripción de sus pasos a continuación:
 
 \begin{enumerate}
-\item Organización de los elementos de entrada: Antes de realizar la llamada a la función $corteClique$, lo que se hace es organizar la información recibida por $Cplex$ de manera de quedarse con los datos que son relevantes para el método de corte. Como $corteClique$ necesita de un nodo para empezar a realizar su tarea, el procedimiento antes de llamarlo es ordenar los valores del problema que se correspondan con nodos del grafo, de mayor valor a menor valor, para los nodos que tengan valores entre cero y uno. El motivo por el cual se hace esto antes, es por que hay mas probabilidad de violar la desigualdad clique,  ya que la idea es buscar aquella clique con el valor de sumatoria más grande. Con esto entonces, se llama al método de corte clique, que recibe el $X$ de la solución relajada en ese momento, y los nodos ordenados por sus valores de mayor a menor.
+\item Se toma la solución $X$ que encontró $CPLEX$ para el nodo actual del árbol de branching. Este vector tiene una cantidad determinada columnas, las cuales se corresponden con las variables $w_j$ de colores y $x_pj$ de nodos/colores del grafo. De todas estas columnas nos quedamos solamente con aquellas que se correspondan con los $x_pj$ tal que su valor $k$ sea $0 \le k < 1$. Recordar que estos valores son de punto flotante debido a la relajación.
 
-\item Una vez llamado al método de corte, la idea de lo que se hace en el es simple. Lo que se trata de hacer es generar una clique a partir del nodo con mayor valor, relacionado con la entrada que se mencionó en el paso anterior. A partir de este nodo se va generando una clique, primero viendo si el siguiente nodo a ser seleccionado, se encuentra pintado del mismo color que el nodo inicial. Si esto pasa, entonces se verifica que el mismo sea adyacente a los nodos que se encuentran en la clique, y si esto resulta ser verdad, se agrega, el nodo a la restricción de clique.
+\item Dado que buscamos la clique de mayor valor de sumatoria del valor de sus variables asociadas, recorremos este vector de mayor a menor intentando agregar un nuevo nodo en cada paso. Notar que este es un vector de variables del modelo, por lo tanto para testear si se puede agregar o no un nuevo nodo a la clique en construcción, dada la columna $x_pj$, averiguamos el $p$ y el $j$ confiando fuertemente en el formato del archivo $.lp$ de entrada, ya que estos cálculos dependen del orden de las columnas en la sección $Binary$. Si $j$ es del mismo color que el primer elemento del vector ordenado (que siempre es agregado como primer nodo) y si $p$ es vecino de todos los nodos de la clique actual, se procede a agregar el nodo y se guarda también la columna relacionada.
 
-Una vez que se agrega un nodo a la clique, se verifica además si la desigualdad se sigue cumpliendo. Si la desigualdad deja de cumplirse entonces, se genera un corte con la violación de la desigualdad y se termina con el método. Si la desigualdad sigue cumpliéndose, se continúa con otro nodo.
+\item Luego de agregar un nuevo nodo verificamos si la desigualdad
 
-Si se llega a que no se puede generar una clique que haga violar la desigualdad, entonces el método termina, pero sin agregar ningún corte.
+$$\displaystyle\sum_{p \in K} x_{pj_0} > w_{j_0} + \epsilon$$
 
+se cumple. Esto quiere decir que la desigualdad clique es violada y por lo tanto podemos agregar un corte (gracias a lo demostrado anteriormente) y la heurística termina. Utilizamos un margen de error $\epsilon = 0.000001$.
 \end{enumerate}
 
 A continuación se agrega el pseudocódigo para mostrar mejor la idea que se explico anteriormente.
@@ -149,14 +150,14 @@ A continuación se agrega el pseudocódigo para mostrar mejor la idea que se expli
 \caption{Corte Clique}
 %\label{alg:algoritmo2_1}
 \begin{algorithmic}[1]
-\PARAMS{Datos de $Cplex$}
-\STATE Ordenar los x\'s de acuerdo a su valor y que estén entre 0 y 1.
-\STATE Obtener el nodo $X_m$ con mayor valor.
+\PARAMS{Datos de $CPLEX$}
+\STATE Ordenar los x\'s de acuerdo a su valor y que estén entre 0 (inclusive) y 1 (exclusive).
+\STATE Obtener el nodo asociado a la columna $X_m$ con mayor valor.
 \STATE Agregar $X_m$ a la clique $K$
-\FOR{Cada nodo $X_i$ que siguen en el ordenamiento y que tenga el mismo color que $X_m$}
-	\IF{$X_i$ es adyacente a todos los nodos de $K$}
-		\STATE agregar $X_i$ a $K$
-		\IF{la sumatoria de valores de $K$ es mayor que el valor de $W_{j0}<e$, donde j0 es el color de $X_m$}
+\FOR{Cada columna $X_i$ que siguen en el ordenamiento y que tenga el mismo color que $X_m$}
+	\IF{El nodo relacionado con la columna $X_i$ es adyacente a todos los nodos de $K$}
+		\STATE agregar el nodo a $K$
+		\IF{la sumatoria de valores de $K$ es mayor que el valor de $w_{j0} + \epsilon$, donde j0 es el color de $X_m$}
 			\STATE Generar la desigualdad basada en $K$, agregarla al problema y salir del ciclo.
 		\ENDIF
 	\ENDIF
@@ -164,43 +165,67 @@ A continuación se agrega el pseudocódigo para mostrar mejor la idea que se expli
 \end{algorithmic}
 \end{algorithm}
 
+La idea de esta heurística fue extraída del paper ``A branch-and-cut algorithm for graph coloring'' de Isabel Méndez Díaz y Paula Zabala, como se puede ver en la referencia \cite{cliquecutalgorithm}.
+
 
 \subsection{Heurística de Separación: Agujero Impar}
 
-El método que realiza los cortes de tipo agujero impar es $corteCicloImpar$, que se llama cada vez que $Cplex$ intenta hacer un corte. La idea del funcionamiento de este método es simple. Se parte de la misma base que la heurística de clique descripta anteriormente, es decir partiendo de la base de que los valores relacionados a cada nodo se encuentran ordenados de mayor a menor, para maximizar la probabilidad en este caso de encontrar un ciclo que viole la desigualdad agujero impar. A continuación se describen los pasos mas importantes del algoritmo.
+El método que realiza los cortes de tipo agujero impar es $corteCicloImpar$, que es llamado por $cortes$, el cual a su vez se llama cada vez que $CPLEX$ intenta hacer un corte. La idea del funcionamiento de este método es simple. Se parte de la misma base que la heurística de clique descripta anteriormente, es decir partiendo de la base de que los valores relacionados a cada nodo se encuentran ordenados de mayor a menor, para maximizar la probabilidad en este caso de encontrar un ciclo que viole la desigualdad agujero impar. A continuación se describen los pasos mas importantes del algoritmo.
 
 \begin{enumerate}
-\item Una vez recibidos los datos que son pasados por $Cplex$ y con los nodos ordenados de mayor a menor, lo que se hace es partir del nodo con mayor valor y realizar un bfs, de manera de construir un árbol, en base al grafo relacionado al problema actual.
-\item A medida que se hace el bfs y a medida que va creciendo el árbol, se verifica si existen ciclos impares entre cada par de nodos que sean hojas en ese paso y sean adyacentes entre si. La elección de las hojas no es al azar sino que se eligen los pares que pertenezcan a diferentes raíces. El concepto anterior puede resultar ambiguo por lo que se dará una definición un poco mas formal de lo que quiere decir que dos hojas tengan distintos nodos raices.
-
-Sea $h_1$ y $h_2$, dos hojas en el arbol de bfs en el paso actual, y sea $R$ el nodo raíz de ese árbol (nodo por el cual se comenzó el proceso de bfs, el nodo con mayor valor entre los ordenados de mayor a menor). Se dice que $h_1$ y $h_2$ tienen diferente nodo raíz, si y solo si desde $R$, existen dos nodos distintos $n_1$ y $n_2$ adyacentes a $r$ en el árbol bfs actual tal que desde $n_1$ se puede llegar a $h_1$ y desde $n_2$ se puede llegar a $h_2$ bajando en el árbol o viceversa.
-
-Con esto entonces queda claro cuales son los nodos que se tienen en cuenta a la hora de ver si se generan ciclos.
-
-Un vez que se sabe que existe un ciclo impar, llama a otro método, llamado $tryToAddOddCycleCut$ que se encarga de generar el ciclo que se generó y verificar si la desigualdad de agujero impar no se cumple para cada uno de los colores disponibles. Sino se cumple, entonces se agrega la o las restricciónes al problema (se puede agregar mas de 1 restricción al problema, si es que para 2 o mas colores se encuentra que la desigualdad se viola), sino se continúa repitiendo el proceso hasta que se haya finalizado el bfs del grafo.
-
-Cabe aclarar además, que si bien para cada ciclo encontrado, pueden agregarse 0, 1 o más restricciones nuevas al problema, se pueden agregar más restricciones a medida que se sigue recorriendo el grafo con bfs, ya que cuando se encuentra un ciclo y este genera alguna restricción nueva al problema, el proceso no se detiene.
-
+\item Una vez recibidos los datos que son pasados por $CPLEX$ y con los nodos ordenados de mayor a menor, lo que se hace es partir del nodo con mayor valor y realizar un BFS, de manera de construir un árbol en base al grafo relacionado al problema actual. El método hace varias iteraciones partiendo siempre desde distinto nodo, de mayor a menor valor de columna asociada. Tiene un límite dado para la cantidad de iteraciones y para cada iteración, otro límite dado para la cantidad de ciclos verificados.
+\item A medida que se hace el BFS y a medida que va creciendo el árbol, se verifica si existen ciclos impares entre cada par de nodos $h_1$ y $h_2$ que sean hojas en ese paso y sean adyacentes entre sí. Esto no se hace para todo par de hojas $h_1$ y $h_2$, sino solamente para aquellas que vengan de diferente hijo de la raíz. Es decir, dos hojas $h_1$ y $h_2$ vienen de diferentes hijos de la raíz $r_1$ y $r_2$ si, al eliminar la raíz del árbol de BFS actual, existe un camino desde $r_1$ a $h_1$ y otro desde $r_2$ a $h_2$, con $r_1 \neq r_2$.
+\item Un vez que se sabe que existe un ciclo impar se llama a otro método: $tryToAddOddCycleCut$. Este se encarga de reconstruir el ciclo encontrado y verificar si la desigualdad de agujero impar no se cumple para cada uno de los colores disponibles. Si no se cumple, entonces se agrega una restricción al problema (notar que en una llamada a $tryToAddOddCycleCut$ se puede agregar más de 1 restricción al problema, si es que para 2 o mas colores se encuentra que la desigualdad se viola), sino se continúa repitiendo el proceso de BFS.
+Cabe aclarar además, que si bien para cada ciclo encontrado, pueden agregarse 0, 1 o más restricciones nuevas al problema, se pueden agregar más restricciones a medida que se sigue recorriendo el grafo en orden BFS, ya que cuando se encuentra un ciclo y este genera alguna restricción nueva al problema, el proceso no se detiene hasta tanto se haya recorrido toda la componente conexa o se haya llegado al límite de búsqueda de ciclos.
 \end{enumerate}
 
-A continuación, 
+Para explicar mejor el algoritmo, veamos su pseudocódigo:
 
 \begin{algorithm}[H]
 \caption{Corte Agujero Impar}
 %\label{alg:algoritmo2_1}
 \begin{algorithmic}[1]
-\PARAMS{Datos de $Cplex$}
+\PARAMS{Datos de $CPLEX$}
 \STATE Ordenar los x\'s de acuerdo a su valor y que estén entre 0 y 1.
-\STATE Obtener el nodo $X_m$ con mayor valor.
-\STATE \COMMENT Se comienza a realizar el proceso de bfs.
-\STATE Tomar $X_m$ como raíz principal para formar el árbol $A_{bfs}$ y marcarlo.
-%\FOR{Cada nodo $X_i$ que siguen en el ordenamiento y que no esté marcado}
-%	\IF{$X_i$ es adyacente a todos los nodos de $K$}
-%		\STATE agregar $X_i$ a $K$
-%		\IF{la sumatoria de valores de $K$ es mayor que el valor de $W_{j0}<e$, donde j0 es el color de $X_m$}
-%			\STATE Generar la desigualdad basada en $K$, agregarla al problema y salir del ciclo.
-%		\ENDIF
-%	\ENDIF
-%\ENDFOR
+\STATE Obtener el nodo asociado $r$ a la columna $X_m$ con mayor valor.
+\STATE \COMMENT{Se comienza a realizar el proceso de BFS.}
+\STATE Tomar el nodo $r$ como raíz principal para formar el árbol $A_{BFS}$, marcar su nivel en $0$, su raíz $n_m$ y su padre $-1$.
+\FOR{Cada nodo $r_{ady}$ adyacente a $r$}
+	\STATE $Nivel(r_{ady}) \leftarrow 2$
+	\STATE $Raiz(r_{ady}) \leftarrow r_{ady}$
+	\STATE $Padre(r_{ady}) \leftarrow r$
+\ENDFOR
+\FOR{Cada nodo $n_i$ que sigue en el recorrido BFS}
+	\IF{Aún no se alcanzó el límite de ciclos verificados}
+		\FOR{Cada nodo $n_k$ en $Vecinos(n_i)$}
+			\IF{$Nivel(n_k) > -1$}
+				\STATE $tamanoCiclo \leftarrow Nivel(n_i) + Nivel(n_k) + 1$
+				\IF{$n_k$ no es el padre de $n_i$ y tamanoCiclo es impar, mayor a 4 y $Raiz(n_k) \neq Raiz(n_i)$}
+						\STATE $tryToAddOddCycleCut(n_k, n_i, Padre, r)$
+				\ENDIF
+			\ELSE
+				\STATE $Nivel(n_k) \leftarrow Nivel(n_i) + 1$
+				\STATE $Raiz(n_k) \leftarrow Raiz(n_i)$
+				\STATE $Padre(n_k) \leftarrow n_i$
+			\ENDIF
+		\ENDFOR
+	\ENDIF
+\ENDFOR
 \end{algorithmic}
 \end{algorithm}
+
+La idea del método $tryToAddOddCycleCut$ es simple y no necesita demasiado detalle. En este se aprobecha la información construída de los padres de cada nodo para reconstruir el ciclo. A su vez se va calculando la sumatoria de los valores correspondientes a las columnas $x_{pj_0}$ tal que $p \in OddCycle$ y todas tienen el mismo $j_0$. Luego este valor se lo compara con $w_{j_0}$ de la siguiente manera:
+
+$$\sum_{p \in C_{2k+1}} x_{p{j_0}} > kw_{j_0}$$
+
+siendo k el tamaño del ciclo. Si esto se cumple quiere decir que la desigualdad $Odd-Hole$ es violada, por lo tanto agregamos una restricción al problema. Además, como dijimos, se prueba esta desigualdad para todo color $j_0$.
+
+La idea del algoritmo fue extraída del paper ``Solving Airline Crew Scheduling Problems by Branch-and-Cut'' de Karla L. Hoffman y Manfred Padberg, como se puede ver en la referencia \cite{oddcyclecutalgorithm}.
+
+\subsection{Flujo del algoritmo de Planos de Corte para el ejercicio 2}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.2]{figuras/flow2.png}
+\caption{Flujo del algoritmo}
+\end{figure}
