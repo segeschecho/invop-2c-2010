@@ -182,3 +182,25 @@ Un vez que se sabe que existe un ciclo impar, llama a otro método, llamado $tryT
 Cabe aclarar además, que si bien para cada ciclo encontrado, pueden agregarse 0, 1 o más restricciones nuevas al problema, se pueden agregar más restricciones a medida que se sigue recorriendo el grafo con bfs, ya que cuando se encuentra un ciclo y este genera alguna restricción nueva al problema, el proceso no se detiene.
 
 \end{enumerate}
+
+A continuación, 
+
+\begin{algorithm}[H]
+\caption{Corte Agujero Impar}
+%\label{alg:algoritmo2_1}
+\begin{algorithmic}[1]
+\PARAMS{Datos de $Cplex$}
+\STATE Ordenar los x\'s de acuerdo a su valor y que estén entre 0 y 1.
+\STATE Obtener el nodo $X_m$ con mayor valor.
+\STATE \COMMENT Se comienza a realizar el proceso de bfs.
+\STATE Tomar $X_m$ como raíz principal para formar el árbol $A_{bfs}$ y marcarlo.
+%\FOR{Cada nodo $X_i$ que siguen en el ordenamiento y que no esté marcado}
+%	\IF{$X_i$ es adyacente a todos los nodos de $K$}
+%		\STATE agregar $X_i$ a $K$
+%		\IF{la sumatoria de valores de $K$ es mayor que el valor de $W_{j0}<e$, donde j0 es el color de $X_m$}
+%			\STATE Generar la desigualdad basada en $K$, agregarla al problema y salir del ciclo.
+%		\ENDIF
+%	\ENDIF
+%\ENDFOR
+\end{algorithmic}
+\end{algorithm}
