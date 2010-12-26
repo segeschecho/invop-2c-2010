@@ -517,7 +517,7 @@ int minAvailableColor( Node node, vector< int > coloring, int qtyColorsUsed )
     return minColor + 1;
 }
 
-int heuristicBFSUpperBound(Node nStartingNode)
+int BFSColoring( Node nStartingNode )
 {
     if ( g_nNodes == 0 )
         return 0;
@@ -563,6 +563,22 @@ int heuristicBFSUpperBound(Node nStartingNode)
     }
 
     return nColors;
+}
+
+int heuristicBFSUpperBound(int nIterations, vector< pair< int, Node > > vnNodesOrderedByDegree)
+{
+    int nBFSColoringNumber = 0;
+    if( vnNodesOrderedByDegree.size() > 0 )
+        nBFSColoringNumber = BFSColoring(vnNodesOrderedByDegree[vnNodesOrderedByDegree.size() - 1].second);
+
+    for( int i = vnNodesOrderedByDegree.size() - 2; i >= 0 && nIterations > 0; i-- )
+    {
+        Node startingNode = vnNodesOrderedByDegree[i].second;
+        nBFSColoringNumber = min( nBFSColoringNumber, BFSColoring(startingNode) );
+        nIterations--;
+    }
+
+    return nBFSColoringNumber;
 }
 
 int heuristicSequentialUpperBound()
@@ -654,19 +670,13 @@ int maximalClique( Node startingNode )
     return nCliqueNodes;
 }
 
-int heuristicCliqueLowerBound( int iterations )
+int heuristicCliqueLowerBound( int iterations, vector< pair< int, Node > > vnNodesOrderedByDegree )
 {
-    vector< pair<int, Node> > vnNodeDegree;
-    for( Node nCurrentNode = 0; nCurrentNode < g_nNodes; nCurrentNode++ )
-        vnNodeDegree.push_back( pair<int, Node>(g_vvEGraphAdjList[nCurrentNode].size(), nCurrentNode) );
-
-    sort( vnNodeDegree.begin(), vnNodeDegree.end() );
-
     int maximalCliqueNodes = 0;
 
-    for( int i = vnNodeDegree.size() - 1; i >= 0 && iterations > 0; i-- )
+    for( int i = vnNodesOrderedByDegree.size() - 1; i >= 0 && iterations > 0; i-- )
     {
-        Node startingNode = vnNodeDegree[i].second;
+        Node startingNode = vnNodesOrderedByDegree[i].second;
         maximalCliqueNodes = max( maximalCliqueNodes, maximalClique(startingNode) );
         iterations--;
     }
@@ -676,13 +686,15 @@ int heuristicCliqueLowerBound( int iterations )
 
 void heuristicBounds()
 {
-    g_nHeuristicColorBounds.first = heuristicCliqueLowerBound(g_nMaxIterationsLowerBoundHeuristic);
-    for( Node nStartingNode = 0;
-              nStartingNode < g_nNodes &&
-              nStartingNode < g_nMaxIterationsUpperBoundHeuristic;
-              nStartingNode++ )
-        g_nHeuristicColorBounds.second = min(heuristicBFSUpperBound(nStartingNode), g_nHeuristicColorBounds.second);
-    g_nHeuristicColorBounds.second = min(heuristicSequentialUpperBound(), g_nHeuristicColorBounds.second);
+    vector< pair<int, Node> > vnNodeDegree;
+    for( Node nCurrentNode = 0; nCurrentNode < g_nNodes; nCurrentNode++ )
+        vnNodeDegree.push_back( pair<int, Node>(g_vvEGraphAdjList[nCurrentNode].size(), nCurrentNode) );
+
+    sort( vnNodeDegree.begin(), vnNodeDegree.end() );
+
+    g_nHeuristicColorBounds.first = heuristicCliqueLowerBound(g_nMaxIterationsLowerBoundHeuristic, vnNodeDegree);
+    g_nHeuristicColorBounds.second = min( heuristicBFSUpperBound(g_nMaxIterationsUpperBoundHeuristic, vnNodeDegree),
+                                          heuristicSequentialUpperBound() );
 }
 
 //////////////////////////////////////////////////////////////////////////
