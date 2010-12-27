@@ -1,5 +1,7 @@
 \section{Ejercicio 4}
 
+\subsection{Tipos de tests y casos}
+
 En esta sección se harán comparaciones entre los algoritmos de las secciones anteriores con un algoritmo que corre $CPLEX$ standard con los parámetros por defecto. Además, se analizará cómo aportan nuestras heurísticas y algoritmos de separación a $CPLEX$ por defecto.
 
 Los análisis y las comparaciones se harán en base a una serie de tipos de tests que tienen diferentes configuraciones entre los cortes a usar, las heurísticas iniciales y diferentes parámetros que definen el comportamiento del Branching. Los tipos de test, son los siguientes:
@@ -17,7 +19,7 @@ Los análisis y las comparaciones se harán en base a una serie de tipos de tests 
 
 \end{enumerate}
 
-Con estos tipos de tests, se espera ver como se comportan las heurísticas implementadas versus las heurísticas iniciales de $Cplex$, el rendimiento en tiempo y cantidad de nodos entre $Cplex$ automático versus las variantes que se tenían en secciones anteriores.
+Con estos tipos de tests, se espera ver como se comportan las heurísticas implementadas versus las heurísticas iniciales de $CPLEX$, el rendimiento en tiempo y cantidad de nodos entre $CPLEX$ automático versus las variantes que se tenían en secciones anteriores.
 
 A continuación se describirán cuales son las instancias con las cuales se harán las pruebas para cada tipo:
 
@@ -40,7 +42,7 @@ A continuación se describirán cuales son las instancias con las cuales se harán 
 
 \end{enumerate}
 
-\subsection{Resultados}
+\subsection{Resultados y comparación final}
 
 \begin{figure}[H]
 \centering
@@ -48,7 +50,8 @@ A continuación se describirán cuales son las instancias con las cuales se harán 
 \caption{Tiempo en segundos para cada test}
 \end{figure}
 
-En este gráfico se puede observar que $CPLEX$ configurado en todo automático generalmente prevalece en tiempos. Esto puede ser debido a que los cortes implementados no son del todo performantes o que $CPLEX$ se configura bien automáticamente. De todos modos los tiempos de ejecución se pueden llegar a reducir si probamos con otras configuraciones de los parámetros de $CPLEX$. Algo que llama la atención es que en el test número cinco, $Cplex$ es notablemente mejor que los demás resolvedores, evidentemente hay muchas cosas que no se tienen en cuenta a la hora de elegir mejores camimos en el branching, o a la hora de realizar cortes de una naturaleza distinta a las de clique o agujero impar.
+En este gráfico se puede observar que $CPLEX$ configurado en todo automático generalmente prevalece en tiempos. Esto puede ser debido a que los cortes implementados no son del todo performantes o que $CPLEX$ se configura bien automáticamente. De todos modos los tiempos de ejecución se pueden llegar a reducir si probamos con otras configuraciones de los parámetros de $CPLEX$. Algo que llama la atención es que en el test número cinco, $CPLEX$ es notablemente mejor que los demás resolvedores, evidentemente hay muchas cosas que no se tienen en cuenta a la hora de elegir mejores camimos en el branching, o a la hora de realizar cortes de una naturaleza distinta a las de clique o agujero impar. Cabe aclarar también, que como $CPLEX$ se encuentra configurado con su preproceso activado para el tipo 5, puede pasar que se estén utilizando otras heurísticas de reducción del problema, diferentes a las implementadas por nosotros.
+Es interesante destacar que, al contrario de lo que creíamos, el tipo 1 (Branch and Bound) logró una no tan mala performance en comparación con todos los demás tipos.
 
 \begin{figure}[H]
 \centering
@@ -56,7 +59,7 @@ En este gráfico se puede observar que $CPLEX$ configurado en todo automático gen
 \caption{Nodos explorados del Branching Tree para cada test}
 \end{figure}
 
-En este gráfico nuevamente se puede observar que $CPLEX$ configurado en todo automático generalmente recorre menos nodos. Esto puede ser debido a que los cortes implementados no son del todo eficientes o que $CPLEX$ se configura bien automáticamente. Sin embargo puede notarse diferencias entre aquellos tests que utilizan los cortes implementados y aquellos que no, pues por lo general estos últimos recorren mayor cantidad de nodos que los primeros. Cabe aclarar también, que como $Cplex$ se encuentra configurado con su preproceso activado para el tipo 5, puede pasar que se estén utilizando otras heurísticas de reducción del problema, diferenctes a las implementadas por nosotros.
+En este gráfico nuevamente se puede observar que $CPLEX$ configurado en todo automático generalmente recorre menos nodos. Esto puede ser debido a que los cortes implementados no son del todo eficientes o que $CPLEX$ se configura bien automáticamente. Sin embargo puede notarse diferencias entre aquellos tests que utilizan los cortes implementados y aquellos que no, pues por lo general estos últimos recorren mayor cantidad de nodos que los primeros.
 
 \begin{figure}[H]
 \centering
@@ -64,7 +67,8 @@ En este gráfico nuevamente se puede observar que $CPLEX$ configurado en todo aut
 \caption{Cortes Clique para cada test}
 \end{figure}
 
-En este gráfico se compara la cantidad de cortes Clique (de los implementados) hechos en cada caso de test que los tenga activados. Por razones obvias no se incluyen los otros tipos de test en la comparación. Se puede confirmar que se logra hacer un gran aporte a $CPLEX$ en cuanto a la cantidad de cortes en cada nodo del Branching Tree. Es por esto que anteriormente en el gráfico de cantidad de nodos explorados, veíamos una diferencia entre aquellos tipos de test que usaban los cortes y aquellos que no.
+En este gráfico se compara la cantidad de cortes Clique (de los implementados) hechos en cada caso de test que los tenga activados. Por razones obvias no se incluyen los otros tipos de test en la comparación. Se puede confirmar que se logra hacer un gran aporte a $CPLEX$ en cuanto a la cantidad de cortes en cada nodo del Branching Tree. Es por esto que anteriormente en el gráfico de la cantidad de nodos explorados veíamos una diferencia entre aquellos tipos de test que usaban los cortes y aquellos que no. Notemos que en el primer test no se hacen cortes Clique. Esto es correcto ya que este grafo la clique máxima es de 2, por lo tanto las desigualdades clique verificadas son las mismas que las restricciones por ejes, que siempre se cumplen.
+
 
 \begin{figure}[H]
 \centering
@@ -82,6 +86,6 @@ En este gráfico se compara la cantidad de cortes Odd-Hole (de los implementados)
 \end{array}
 \]
 
-Los test de tipo 1, 2 y 5 que son los que tienen los cortes desactivados tardan un tiempo significativamente mayor (más que 20 minutos).
+Los test de tipo 1, 2 y 5 que son los que tienen los cortes desactivados tardan un tiempo significativamente mayor (más de 20 minutos).
 
 Hubieron muchísimos tests generados al azar (de hasta 80 nodos) que no tardaron en resolverse gracias a que las heurísticas iniciales daban igual cota inferior que superior, por lo que la función objetivo quedaba vacía. Sin embargo estos tests no fueron incluídos en este informe debido a que no aportaban información alguna para este análisis.
