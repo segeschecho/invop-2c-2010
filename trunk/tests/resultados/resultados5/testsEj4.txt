@@ -5,42 +5,36 @@ heuristicas propias
 cplex normal SIN cortes
 Parametros según ejercicio 1 (los del tipo 7 del ej1 que eran los mejores)
 
+/////// del ejercicio 3
+
 tipo 2:
 
-heuristicas Cplex (preprocesamiento)
-cplex normal SIN cortes
+heuristicas propias
+cplex normal CON cortes de Cplex
 Parametros según ejercicio 1 (los del tipo 7 del ej1 que eran los mejores)
-
-
-/////// del ejercicio 3
 
 tipo 3:
 
 heuristicas propias
-cplex normal CON cortes de Cplex
+cplex normal CON cortes de Cplex y Propios
 Parametros según ejercicio 1 (los del tipo 7 del ej1 que eran los mejores)
 
 tipo 4:
 
 heuristicas propias
-cplex normal CON cortes Propios
-Parametros según ejercicio 1 (los del tipo 7 del ej1 que eran los mejores)
+cplex normal CON cortes de Cplex y Propios
+Parametros automáticos del ej1
 
-
-tipo 5:
-
-heuristicas Cplex
-cplex normal CON cortes de Cplex
-Parametros según ejercicio 1 (los del tipo 7 del ej1 que eran los mejores)
-
-tipo 6:
-
-heuristicas propias
-cplex normal CON cortes Propios
-Parametros según ejercicio 1 (los del tipo 7 del ej1 que eran los mejores)
-
-tipo 7: (Cplex solo)
+tipo 5: (Cplex solo)
 
 heuristicas Cplex
 cortes Cplex
 parametros automaticos del ej1
+
+Parametros de heuristicas y cortes
+----------------------------------
+
+Max cantidad de iteraciones lower bound = 3
+Max cantidad de iteraciones upper bound = 3
+Max cantidad de iteraciones OddCycle cut = 1
+Max cantidad de ciclos verificados por OddCycle cut = 25
