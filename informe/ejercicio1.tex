@@ -1,4 +1,4 @@
-\section{Ejercicio 1}
+\chapter{Ejercicio 1}
 
 El objetivo de este ejercicio consiste en poner a prueba el problema de coloreo, variando algunos de los parámetros que $CPLEX$ utiliza para resolver el problema. Los mismos son parámetros genéricos que forman parte del comportamiento que tiene $CPLEX$ para computar la solución.
 
@@ -38,7 +38,7 @@ Los parámetros elegidos son los siguientes:
 \item \textbf{CPX\_PARAM\_ZEROHALFCUTS:} Aquí se indica si se harán o no cortes de tipo parte entera hacia abajo para los valores del lado derecho de las restricciones. Los posibles valores son: -1, desactivado, 0 automático, 1 normal y 2 agresivo.
 \end{enumerate}
 
-\subsection{Pruebas realizadas}
+\section{Pruebas realizadas}
 
 En lo que sigue de la sección actual, se mostrarán los resultados de varias rondas de tests,las cuales involucran la combinación de diferentes parámetros de $CPLEX$. Además, se irá contando cuales fueron los problemas encontrados en cada una de las rondas y como se fueron seleccionando los mejores valores de los parámetros, para realizar las pruebas finales.
 
@@ -52,7 +52,7 @@ Por último, se deshabilitó la salida por consola de los resultados de las iterac
 
 La pc en la que se realizaron todas las pruebas es un $Athlon$ $64$ $3000+$ con $1.80Ghz$ de velocidad de procesador, un solo núcleo y con $1GB$ de memoria Ram $DDR2$ de $800Mhz$.
 
-\subsubsection{Ronda Número 1}
+\section{Ronda Número 1}
 
 La primer ronda consistió en realizar tests combinando los parámetros 1, 2, 5 y 6, con lo que se obtuvo $24$ tipos distintos de tests. Los mismos recibían como parámetros grafos de 3 a 13 nodos, con una densidad de $70\%$ de aristas. La relativamente poca cantidad de nodos se debe a que la PC en la que se realizaban todas las pruebas no podía resolver coloreo con grafos de 14 o más nodos, dado que la cantidad de memoria de la que disponía no alcanzaba, y por este motivo $CPLEX$ devolvía un error que informaba dicho problema.
 
@@ -270,7 +270,7 @@ El control de dicha metodología se setea mediante el parámetro de configuración 
 
 En esto entonces se basan los tests realizados por la ronda número dos, que se explicarán en la siguiente sección.
 
-\subsubsection{Ronda Número 2}
+\section{Ronda Número 2}
 
 En esta ronda se realizaron tests seteando el parámetro $CPX\_PARAM\_VARSEL$ en automático, de forma que $CPLEX$ seleccionará la variable que mejor le convenga para realizar el branching. De esta forma la cantidad de tipos de tests a realizar disminuyó a 12 (doce).
 
@@ -407,7 +407,7 @@ Como los grafos que se utilizaron de prueba son bastante pequeños, y dado que la
 
 En la siguiente ronda de tests se incluirán algunas heurísticas iniciales para realizar dicha acotación, tanto superiormente como inferiormente.
 
-\subsubsection{Ronda número 3}
+\section{Ronda número 3}
 
 En esta ronda de pruebas se agregan tres heurísticas iniciales para ayudar a $CPLEX$ a resolver el problema de forma más rápida, dado que las mismas sirven para acortar el rango de valores de la función objetivo, tanto inferiormente como superiormente. Las mismas se detallan en la sección ``Heurísticas Iniciales''.
 
@@ -423,7 +423,7 @@ Como se puede observar, los tiempos son mucho mas cortos y menores a un segundo,
 
 Algo más a observar es la prevalencia de los tiempos de los tipos 7, 8 y 9, que se destacan entre los tipos de combinación de parámetros, con los primeros puestos en cuanto a tiempo de ejecución.
 
-\subsubsection{Ronda número 4}
+\section{Ronda número 4}
 
 En esta ronda lo que se planeó hacer es fijar los parámetros que se estuvieron usando para los demás rondas de tests, en particular, elegir alguna combinación de ellos (algún tipo de combinación). Anteriormente, se mencionó que los tipos 7, 8 y 9 eran los que se veían como mejores, dado el tiempo de respuesta a la hora de resolver el problema. Para que la cantidad de tests no crezca exponencialmente, tomaremos el tipo 7 como ejemplo para los siguientes experimentos.
 
@@ -494,7 +494,7 @@ Como se puede observar las cotas funcionaron bastante bien, siendo así que no se
 
 Para cada problema se ejecutan heurísticas iniciales que nos acota el valor de la función objetivo. Con estas cotas transformamos el problema en otro con menor cantidad de filas y menor cantidad de columnas comparado con el problema sin las mismas.
 
-\subsection{De Cota Superior}
+\section{De Cota Superior}
 
 Para encontrar una cota superior al valor de la función objetivo del problema existen dos heurísticas, que se implementaron para tratar de tener un mejor resultado, ya que una puede ser mala para una instancia y la otra no, o viceversa. Por esta razón, para cada instancia, se llama a estas dos implementaciones, y se queda con el menor valor de ambas.
 
@@ -517,7 +517,7 @@ Hasta la ronda número 4, se utilizó $heuristicBFSUpperBound$ como se detalla en 
 \item $heuristicSequentialUpperBound$: Se ordenan los nodos de acuerdo a sus grados, y se van recorriendo de mayor a menor grado. Al igual que la heurística anterior, se identifican los colores numerándolos. Dado un nodo, se lo pinta del menor número disponible, evitando pintarlo del mismo color que alguno de sus vecinos, al igual que la heurística anterior.
 \end{itemize}
 
-\subsection{De Cota Inferior}
+\section{De Cota Inferior}
 
 Para obtener una cota inferior para el problema se implementó la heurística $heuristicCliqueLowerBound$ que busca una clique maximal para el grafo del problema. De este modo podemos decir que la cantidad de colores necesarios para pintar el grafo es almenos la cantidad dada por el tamaño de la clique.
 
@@ -525,7 +525,7 @@ Se intenta buscar la clique más grande posible. Dado que es más probable encontr
 
 Para encontrar la clique maximal se utilizó el algoritmo $New-Best-In$ del paper ``A Simple Clique Camouflaging Against Greedy Maximum Clique Heuristics'' de Stanislav Busygin que se puede ver en la referencia \cite{newbestin}.
 
-\subsection{Flujo del algoritmo de branch-and-bound para el ejercicio 1}
+\section{Flujo del algoritmo de branch-and-bound para el ejercicio 1}
 
 \begin{figure}[H]
 \centering

@@ -1,4 +1,4 @@
-\section{Ejercicio 2}
+\chapter{Ejercicio 2}
 
 Para demostrar que las desigualdades son válidas, se utilizará el método del absurdo y demostración por inducción. La desigualdad es válida para el $CP$ original (sin relajación) si la desigualdad se cumple para todos los puntos dentro de la cápsula convexa de soluciones factibles enteras. Por lo tanto el planteo inicial será suponer que el punto no cumple con la nueva restricción pero sí con las condiciones originales.
 
@@ -15,7 +15,7 @@ Supongamos que existe un coloreo válido para el $CP$ original. Por lo tanto exis
 
 \end{enumerate}
 
-\subsection{Demostración Desigualdad 1: Clique}
+\section{Demostración Desigualdad 1: Clique}
 
 Sea K una Clique del grafo y sea $j_0$ cualquier color tal que $1 \le j_0 \le n$. Supongamos que la solución no cumple con la desigualdad clique, entonces sabemos que vale lo siguiente:
 
@@ -84,7 +84,7 @@ Lo cual resulta absurdo, pues por (4) $w_j \in \{0, 1\} \forall 1 \le j \le n$. 
 
 Dado que no hay más alternativas, la suposición de que la desigualdad no se cumple es falsa. $\qed$
 
-\subsection{Demostración Desigualdad 2: Agujero de Longitud Impar}
+\section{Demostración Desigualdad 2: Agujero de Longitud Impar}
 
 Sea $C_{2k+1}$ el conjunto de vértices dentro de un agujero de longitud $2k+1$, con $k >= 2$. Supongamos que la solución no cumple con la desigualdad agujero impar. Por lo tanto podemos decir que $\exists k >= 2$ tal que:
 
@@ -126,7 +126,7 @@ Para un circuito de longitud $2k+1$, la máxima cantidad de nodos pintados del mi
 Dado que no hay más alternativas, la suposición de que la desigualdad no se cumple es falsa. $\qed$
 
 
-\subsection{Heurística de Separación: Clique}
+\section{Heurística de Separación: Clique}
 
 Se implementó un callback llamado $cortes$ que se lo setea a $CPLEX$ como heurística de separación. Este callback se ejecuta juesto luego de que $CPLEX$ haya encontrado la solución para un nodo del árbol de branching, y llama a nuestra función de separación por cortes clique, llamada $corteClique$.
 
@@ -165,10 +165,10 @@ A continuación se agrega el pseudocódigo para mostrar mejor la idea que se expli
 \end{algorithmic}
 \end{algorithm}
 
-La idea de esta heurística fue extraída del paper ``A branch-and-cut algorithm for graph coloring'' de Isabel Méndez Díaz y Paula Zabala, como se puede ver en la referencia \cite{cliquecutalgorithm}.
+La idea de esta heurística fue extraída del paper ``A branch-and-cut algorithm for graph coloring'' de Isabel Méndez Díaz y Paula Zabala, como se puede ver en las referencias (sección \ref{cliquecutalgorithm}).
 
 
-\subsection{Heurística de Separación: Agujero Impar}
+\section{Heurística de Separación: Agujero Impar}
 
 El método que realiza los cortes de tipo agujero impar es $corteCicloImpar$, que es llamado por $cortes$, el cual a su vez se llama cada vez que $CPLEX$ intenta hacer un corte. La idea del funcionamiento de este método es simple. Se parte de la misma base que la heurística de clique descripta anteriormente, es decir partiendo de la base de que los valores relacionados a cada nodo se encuentran ordenados de mayor a menor, para maximizar la probabilidad en este caso de encontrar un ciclo que viole la desigualdad agujero impar. A continuación se describen los pasos mas importantes del algoritmo.
 
@@ -220,12 +220,4 @@ $$\sum_{p \in C_{2k+1}} x_{p{j_0}} > kw_{j_0}$$
 
 siendo k el tamaño del ciclo. Si esto se cumple quiere decir que la desigualdad $Odd-Hole$ es violada, por lo tanto agregamos una restricción al problema. Además, como dijimos, se prueba esta desigualdad para todo color $j_0$.
 
-La idea del algoritmo fue extraída del paper ``Solving Airline Crew Scheduling Problems by Branch-and-Cut'' de Karla L. Hoffman y Manfred Padberg, como se puede ver en la referencia \cite{oddcyclecutalgorithm}.
-
-\subsection{Flujo del algoritmo de Planos de Corte para el ejercicio 2}
-
-\begin{figure}[H]
-\centering
-\includegraphics[scale=0.2]{figuras/flow2.png}
-\caption{Flujo del algoritmo}
-\end{figure}
+La idea del algoritmo fue extraída del paper ``Solving Airline Crew Scheduling Problems by Branch-and-Cut'' de Karla L. Hoffman y Manfred Padberg, como se puede ver en las referencias (sección \ref{oddcyclecutalgorithm}).
