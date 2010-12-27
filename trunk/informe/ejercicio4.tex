@@ -22,7 +22,7 @@ Con estos tipos de tests, se espera ver como se comportan las heurísticas implem
 A continuación se describirán cuales son las instancias con las cuales se harán las pruebas para cada tipo:
 
 \begin{enumerate}
-\item test 1: La primera de las instancias es el grafo myciel4, que es un grafo libre de triángulos.
+\item test 1: La primera de las instancias es el grafo myciel4, que es un grafo libre de triángulos y con 23 nodos.
 
 \item test 2: Grafo generado aleatoriamente, con una cantidad de 42 nodos y una densidad de 25\%.
 
@@ -36,4 +36,52 @@ A continuación se describirán cuales son las instancias con las cuales se harán 
 
 \item test 7: Grafo generado aleatoriamente, con una cantidad de 45 nodos y una densidad de 75\%.
 
+\item test 8: La última instancia es el grafo myciel5, que es un grafo libre de triángulos y con 47 nodos.
+
 \end{enumerate}
+
+\subsection{Resultados}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{../tests/resultados/resultados5/graficoTiemposEj4Tp.png}
+\caption{Tiempo en segundos para cada test}
+\end{figure}
+
+En este gráfico se puede observar que $CPLEX$ configurado en todo automático generalmente prevalece en tiempos. Esto puede ser debido a que los cortes implementados no son del todo performantes o que $CPLEX$ se configura bien automáticamente. De todos modos los tiempos de ejecución se pueden llegar a reducir si probamos con otras configuraciones de los parámetros de $CPLEX$.
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{../tests/resultados/resultados5/graficoNodosEj4Tp.png}
+\caption{Nodos explorados del Branching Tree para cada test}
+\end{figure}
+
+En este gráfico nuevamente se puede observar que $CPLEX$ configurado en todo automático generalmente recorre menos nodos. Esto puede ser debido a que los cortes implementados no son del todo eficientes o que $CPLEX$ se configura bien automáticamente. Sin embargo puede notarse diferencias entre aquellos tests que utilizan los cortes implementados y aquellos que no, pues por lo general estos últimos recorren mayor cantidad de nodos que los primeros.
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{../tests/resultados/resultados5/graficoCortesCliqueEj4Tp.png}
+\caption{Cortes Clique para cada test}
+\end{figure}
+
+En este gráfico se compara la cantidad de cortes Clique (de los implementados) hechos en cada caso de test que los tenga activados. Por razones obvias no se incluyen los otros tipos de test en la comparación. Se puede confirmar que se logra hacer un gran aporte a $CPLEX$ en cuanto a la cantidad de cortes en cada nodo del Branching Tree. Es por esto que anteriormente en el gráfico de la cantidad de nodos explorados veíamos una diferencia entre aquellos tipos de test que usaban los cortes y aquellos que no.
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{../tests/resultados/resultados5/graficoCortesOddHoleEj4Tp.png}
+\caption{Cortes Odd-Hole para cada test}
+\end{figure}
+
+En este gráfico se compara la cantidad de cortes Odd-Hole (de los implementados) hechos en cada caso de test que los tenga activados. Por razones obvias no se incluyen los otros tipos de test en la comparación. Como se ve este tipo de cortes no hace gran aporte a $CPLEX$, pero pudimos confirmar que el mismo es muy eficiente para por lo menos una cierta clase de grafos: aquellos tal que su clique máxima es de 2 (dos) nodos. Se ejecutaron los mismos tipos de test para el test 8 (myciel5) y se logra una excelente performance:
+\[
+\begin{array}{cccc}
+	tiempo(segundos)	&	Odd-Hole	&	Clique	&	nodos\\
+	\hline
+	19.782	&	254 & 0 & 772 \\
+	23.953	&	221 & 0 & 849 \\
+\end{array}
+\]
+
+Los test de tipo 1, 2 y 5 que son los que tienen los cortes desactivados tardan un tiempo significativamente mayor (más que 20 minutos).
+
+Hubieron muchísimos tests generados al azar (de hasta 80 nodos) que no tardaron en resolverse gracias a que las heurísticas iniciales daban igual cota inferior que superior, por lo que la función objetivo quedaba vacía. Sin embargo estos tests no fueron incluídos en este informe debido a que no aportaban información alguna para este análisis.
