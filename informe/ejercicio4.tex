@@ -1,3 +1,20 @@
 \section{Ejercicio 4}
 
-%TODO:hacerlo
+En esta sección se harán comparaciones entre los algoritmos de las secciones anteriores con un algoritmo que corre $Cplex$ standard con los parámetros por defecto. Además, se analizará que aportes se agregan al sumar los cortes programados especialmente a los cortes que trae $Cplex$ por defecto.
+
+Los análisis y las comparaciones se harán en base a una serie de tipos de tests. que tienen diferentes configuraciones entre los cortes a usar, las heurísticas iniciales y diferentes parámetros que definen el comportamiento del branching. Los tipos de test, son los siguientes:
+
+\begin{enumerate}
+\item Tipo 1: Se setean las heurísticas iniciales propias, sin activar las heurísticas iniciales de $Cplex$. Se desactivan todos los tipos de cortes. Se setean los parámetros de Branching según el tipo 7 de los tipos del ejercicio número 1.
+
+\item Tipo 2: Se setean las heurísticas iniciales propias, sin activar las de $Cplex$. Se activan los cortes de $Cplex$ (Solo los de $Cplex$), Se setean los parámetros de Branching según el tipo 7 de los tipos del ejercicio número 1.
+
+\item Tipo 3: Se setean las heurísticas iniciales propias, sin activar las de $Cplex$. Se activan los cortes de $Cplex$ y los cortes Clique y Agujero Impar implementados, Se setean los parámetros de Branching según el tipo 7 de los tipos del ejercicio número 1.
+
+\item Tipo 4: Se setean las heurísticas iniciales propias, sin activar las de $Cplex$. Se activan los cortes de $Cplex$ y los cortes Clique y Agujero Impar implementados, Se setean los parámetros de Branching de forma automática, dejando que $Cplex$ elija el apropiado según el caso.
+
+\item Tipo 5: Solo $Cplex$. Se setean las heurísticas iniciales de $Cplex$ . Se activan los cortes de $Cplex$. Se setean los parámetros de Branching de forma automática, dejando que $Cplex$ elija el apropiado según el caso.
+
+\end{enumerate}
+
+Con estos tipos de tests, se espera ver como se comportan las heurísticas implementadas versus las heurísticas iniciales de $Cplex$, el rendimiento en tiempo y cantidad de nodos entre $Cplex$ automático versus las variantes que se tenían en secciones anteriores.
