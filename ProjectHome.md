@@ -1,0 +1,1 @@
+Aquí se aloja el trabajo práctico de la materia Investigación Operativa de la Universidad de Buenos Aires (FCEN UBA) correspondiente al 2do cuatrimestre del año 2010.
